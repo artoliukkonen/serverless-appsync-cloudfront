@@ -64,6 +64,7 @@ class ServerlessApiCloudFrontPlugin {
     this.prepareComment(distributionConfig);
     this.prepareCertificate(distributionConfig);
     this.prepareWaf(distributionConfig);
+    this.prepareS3(distributionConfig);
   }
 
   prepareLogging(distributionConfig) {
@@ -119,6 +120,15 @@ class ServerlessApiCloudFrontPlugin {
       distributionConfig.WebACLId = waf;
     } else {
       delete distributionConfig.WebACLId;
+    }
+  }
+
+  prepareS3(distributionConfig) {
+    const bucketName = this.getConfig('bucketName', null);
+
+    if (bucketName !== null) {
+      distributionConfig.WebAppS3Bucket.Properties.BucketName = bucketName;
+      distributionConfigWebAppS3BucketPolicy.Properties.BucketName = bucketName;
     }
   }
 

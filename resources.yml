@@ -1,10 +1,60 @@
 ---
 Resources:
+  ## Specifying the S3 Bucket for Web App
+  WebAppS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: WebAppS3BucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+  ## Specifying the policies to make sure all files inside the Bucket are available to CloudFront
+  WebAppS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: WebAppS3BucketName
+      PolicyDocument:
+        Statement:
+          - Sid: OAIGetObject
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::Join:
+                - " "
+                - - arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity
+                  - Ref: S3OriginAccessIdentity
+            Action:
+            - s3:GetObject
+            Resource:
+              Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - Ref: WebAppS3Bucket
+                - "/*"
+  S3OriginAccessIdentity:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Serverless managed web app S3 bucket origin-access-identity
   ApiDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Origins:
+        - Id: WebApp
+          DomainName:
+            Fn::GetAtt: [WebAppS3Bucket, DomainName]
+          ## CustomOriginConfig:
+          ##  HTTPPort: 80
+          ##  HTTPSPort: 443
+          ##  OriginProtocolPolicy: https-only
+          ## In case you want to restrict the bucket access use S3OriginConfig and remove CustomOriginConfig
+          S3OriginConfig:
+            OriginAccessIdentity:
+              Fn::Join:
+              - ''
+              - - origin-access-identity/cloudfront/
+                - Ref: S3OriginAccessIdentity
         - Id: ApiGateway
           DomainName:
             Fn::Join:
@@ -25,28 +75,49 @@ Resources:
         Aliases:
           - domain.tld
         PriceClass: PriceClass_All
+        DefaultRootObject: index.html
+        ## Since the Single Page App is taking care of the routing we need to make sure ever path is served with index.html
+        ## The only exception are files that actually exist e.h. app.js, reset.css
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
         DefaultCacheBehavior:
           AllowedMethods:
-          - DELETE
-          - GET
-          - HEAD
-          - OPTIONS
-          - PATCH
-          - POST
-          - PUT
-          CachedMethods:
-          - HEAD
-          - GET
+            - GET
+            - HEAD
+            - OPTIONS
+          ## The origin id defined above
+          TargetOriginId: WebApp
+          ## Defining if and how the QueryString and Cookies are forwarded to the origin which in this case is S3
           ForwardedValues:
-            QueryString: true
-            Headers: []
+            QueryString: 'false'
             Cookies:
-              Forward: all
-          MinTTL: '0'
-          DefaultTTL: '0'
-          TargetOriginId: ApiGateway
+              Forward: none
+          ## The protocol that users can use to access the files in the origin. To allow HTTP use `allow-all`
           ViewerProtocolPolicy: redirect-to-https
-        CustomErrorResponses: []
+        CacheBehaviors:
+          - AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+            CachedMethods:
+            - HEAD
+            - GET
+            ForwardedValues:
+              QueryString: true
+              Headers: []
+              Cookies:
+                Forward: all
+            MinTTL: '0'
+            DefaultTTL: '0'
+            TargetOriginId: ApiGateway
+            ViewerProtocolPolicy: redirect-to-https
+            PathPattern: api/*
         ViewerCertificate:
           AcmCertificateArn: arn
           SslSupportMethod: sni-only

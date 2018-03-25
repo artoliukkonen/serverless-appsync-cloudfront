@@ -110,13 +110,17 @@ Resources:
             - GET
             ForwardedValues:
               QueryString: true
-              Headers: []
+              Headers:
+                - Accept
+                - Referer
+                - Authorization
+                - Content-Type
               Cookies:
                 Forward: all
             MinTTL: '0'
             DefaultTTL: '0'
             TargetOriginId: ApiGateway
-            ViewerProtocolPolicy: redirect-to-https
+            ViewerProtocolPolicy: https-only
             PathPattern: api/*
         ViewerCertificate:
           AcmCertificateArn: arn

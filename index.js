@@ -64,7 +64,7 @@ class ServerlessApiCloudFrontPlugin {
     this.prepareComment(distributionConfig);
     this.prepareCertificate(distributionConfig);
     this.prepareWaf(distributionConfig);
-    this.prepareS3(distributionConfig);
+    this.prepareS3(resources.Resources);
   }
 
   prepareLogging(distributionConfig) {
@@ -95,7 +95,11 @@ class ServerlessApiCloudFrontPlugin {
   }
 
   prepareOrigins(distributionConfig) {
-    distributionConfig.Origins[0].OriginPath = `/${this.options.stage}`;
+    for(var origin of distributionConfig.Origins) {
+      if (origin.Id === 'ApiGateway') {
+        origin.OriginPath = `/${this.getStage()}`;
+      }
+    }
   }
 
   prepareComment(distributionConfig) {
@@ -123,17 +127,27 @@ class ServerlessApiCloudFrontPlugin {
     }
   }
 
-  prepareS3(distributionConfig) {
+  prepareS3(resources) {
     const bucketName = this.getConfig('bucketName', null);
 
     if (bucketName !== null) {
-      distributionConfig.WebAppS3Bucket.Properties.BucketName = bucketName;
-      distributionConfigWebAppS3BucketPolicy.Properties.BucketName = bucketName;
+      const stageBucketName = `${this.serverless.service.service}-${this.getStage()}-${bucketName}`;
+      resources.WebAppS3Bucket.Properties.BucketName = stageBucketName;
+      resources.WebAppS3BucketPolicy.Properties.Bucket = stageBucketName;
     }
   }
 
   getConfig(field, defaultValue) {
     return _.get(this.serverless, `service.custom.apiCloudFront.${field}`, defaultValue)
+  }
+
+  getStage() {
+      // find the correct stage name
+      var stage = this.serverless.service.provider.stage;
+      if (this.serverless.variables.options.stage) {
+          stage = this.serverless.variables.options.stage;
+      }
+      return stage;
   }
 }
 

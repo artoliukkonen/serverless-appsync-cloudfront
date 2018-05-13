@@ -160,6 +160,12 @@ class ServerlessApiCloudFrontPlugin {
             resources.WebAppS3Bucket.Properties.BucketName = stageBucketName;
             resources.WebAppS3BucketPolicy.Properties.Bucket = stageBucketName;
         }
+
+        const indexDocument = this.getConfig('indexDocument', 'index.html');
+        const errorDocument = this.getConfig('errorDocument', 'error.html');
+
+        resources.WebAppS3Bucket.WebsiteConfiguration.IndexDocument = indexDocument;
+        resources.WebAppS3Bucket.WebsiteConfiguration.ErrorDocument = errorDocument;
     }
 
     getConfig(field, defaultValue) {

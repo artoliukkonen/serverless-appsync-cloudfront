@@ -7,7 +7,7 @@ Resources:
       BucketName: WebAppS3BucketName
       WebsiteConfiguration:
         IndexDocument: index.html
-        ErrorDocument: index.html
+        ErrorDocument: error.html
   ## Specifying the policies to make sure all files inside the Bucket are available to CloudFront
   WebAppS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -44,11 +44,6 @@ Resources:
         - Id: WebApp
           DomainName:
             Fn::GetAtt: [WebAppS3Bucket, DomainName]
-          ## CustomOriginConfig:
-          ##  HTTPPort: 80
-          ##  HTTPSPort: 443
-          ##  OriginProtocolPolicy: https-only
-          ## In case you want to restrict the bucket access use S3OriginConfig and remove CustomOriginConfig
           S3OriginConfig:
             OriginAccessIdentity:
               Fn::Join:

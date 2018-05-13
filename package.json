@@ -1,5 +1,5 @@
 {
-  "name": "serverless-api-cloudfront",
+  "name": "fullstack-serverless",
   "version": "0.9.3",
   "engines": {
     "node": ">=4.0"

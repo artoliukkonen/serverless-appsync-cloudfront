@@ -4,7 +4,7 @@ const chalk = require('chalk');
 const yaml = require('js-yaml');
 const fs = require('fs');
 
-class ServerlessApiCloudFrontPlugin {
+class ServerlessFullstackPlugin {
     constructor(serverless, options) {
         this.serverless = serverless;
         this.options = options;
@@ -169,7 +169,7 @@ class ServerlessApiCloudFrontPlugin {
     }
 
     getConfig(field, defaultValue) {
-        return _.get(this.serverless, `service.custom.apiCloudFront.${field}`, defaultValue)
+        return _.get(this.serverless, `service.custom.fullstack.${field}`, defaultValue)
     }
 
     getStage() {
@@ -182,4 +182,4 @@ class ServerlessApiCloudFrontPlugin {
     }
 }
 
-module.exports = ServerlessApiCloudFrontPlugin;
+module.exports = ServerlessFullstackPlugin;

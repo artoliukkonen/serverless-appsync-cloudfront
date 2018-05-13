@@ -65,6 +65,7 @@ class ServerlessApiCloudFrontPlugin {
         this.prepareComment(distributionConfig);
         this.prepareCertificate(distributionConfig);
         this.prepareWaf(distributionConfig);
+        this.prepareSinglePageApp(distributionConfig);
         this.prepareS3(resources.Resources);
     }
 
@@ -134,6 +135,20 @@ class ServerlessApiCloudFrontPlugin {
             distributionConfig.WebACLId = waf;
         } else {
             delete distributionConfig.WebACLId;
+        }
+    }
+
+    prepareSinglePageApp(distributionConfig) {
+        const isSinglePageApp = this.getConfig('singlePageApp', false);
+        if (isSinglePageApp) {
+            const indexDocument = this.getConfig('indexDocument', 'index.html')
+            for (let errorResponse of distributionConfig.CustomErrorResponses) {
+                if (errorResponse.ErrorCode === '403') {
+                    errorResponse.ResponsePagePath = `/${indexDocument}`
+                }
+            }
+        } else {
+            delete distributionConfig.CustomErrorResponses;
         }
     }
 

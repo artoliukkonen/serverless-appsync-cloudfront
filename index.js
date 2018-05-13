@@ -5,150 +5,160 @@ const yaml = require('js-yaml');
 const fs = require('fs');
 
 class ServerlessApiCloudFrontPlugin {
-  constructor(serverless, options) {
-    this.serverless = serverless;
-    this.options = options;
+    constructor(serverless, options) {
+        this.serverless = serverless;
+        this.options = options;
 
-    this.hooks = {
-      'package:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
-      'aws:info:displayStackOutputs': this.printSummary.bind(this),
-    };
-  }
-
-  createDeploymentArtifacts() {
-    const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
-
-    const filename = path.resolve(__dirname, 'resources.yml');
-    const content = fs.readFileSync(filename, 'utf-8');
-    const resources = yaml.safeLoad(content, {
-      filename: filename
-    });
-
-    this.prepareResources(resources);
-    return _.merge(baseResources, resources);
-  }
-
-  printSummary() {
-    const cloudTemplate = this.serverless;
-
-    const awsInfo = _.find(this.serverless.pluginManager.getPlugins(), (plugin) => {
-      return plugin.constructor.name === 'AwsInfo';
-    });
-
-    if (!awsInfo || !awsInfo.gatheredData) {
-      return;
+        this.hooks = {
+            'package:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
+            'aws:info:displayStackOutputs': this.printSummary.bind(this),
+        };
     }
 
-    const outputs = awsInfo.gatheredData.outputs;
-    const apiDistributionDomain = _.find(outputs, (output) => {
-      return output.OutputKey === 'ApiDistribution';
-    });
+    createDeploymentArtifacts() {
+        const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
 
-    if (!apiDistributionDomain || !apiDistributionDomain.OutputValue) {
-      return ;
+        const filename = path.resolve(__dirname, 'resources.yml');
+        const content = fs.readFileSync(filename, 'utf-8');
+        const resources = yaml.safeLoad(content, {
+            filename: filename
+        });
+
+        this.prepareResources(resources);
+        return _.merge(baseResources, resources);
     }
 
-    const cnameDomain = this.getConfig('domain', '-');
+    printSummary() {
+        const cloudTemplate = this.serverless;
 
-    this.serverless.cli.consoleLog(chalk.yellow('CloudFront domain name'));
-    this.serverless.cli.consoleLog(`  ${apiDistributionDomain.OutputValue} (CNAME: ${cnameDomain})`);
-  }
+        const awsInfo = _.find(this.serverless.pluginManager.getPlugins(), (plugin) => {
+            return plugin.constructor.name === 'AwsInfo';
+        });
 
-  prepareResources(resources) {
-    const distributionConfig = resources.Resources.ApiDistribution.Properties.DistributionConfig;
+        if (!awsInfo || !awsInfo.gatheredData) {
+            return;
+        }
 
-    this.prepareLogging(distributionConfig);
-    this.prepareDomain(distributionConfig);
-    this.preparePriceClass(distributionConfig);
-    this.prepareOrigins(distributionConfig);
-    this.prepareComment(distributionConfig);
-    this.prepareCertificate(distributionConfig);
-    this.prepareWaf(distributionConfig);
-    this.prepareS3(resources.Resources);
-  }
+        const outputs = awsInfo.gatheredData.outputs;
+        const apiDistributionDomain = _.find(outputs, (output) => {
+            return output.OutputKey === 'ApiDistribution';
+        });
 
-  prepareLogging(distributionConfig) {
-    const loggingBucket = this.getConfig('logging.bucket', null);
+        if (!apiDistributionDomain || !apiDistributionDomain.OutputValue) {
+            return;
+        }
 
-    if (loggingBucket !== null) {
-      distributionConfig.Logging.Bucket = loggingBucket;
-      distributionConfig.Logging.Prefix = this.getConfig('logging.prefix', '');
+        const cnameDomain = this.getConfig('domain', '-');
 
-    } else {
-      delete distributionConfig.Logging;
+        this.serverless.cli.consoleLog(chalk.yellow('CloudFront domain name'));
+        this.serverless.cli.consoleLog(`  ${apiDistributionDomain.OutputValue} (CNAME: ${cnameDomain})`);
     }
-  }
 
-  prepareDomain(distributionConfig) {
-    const domain = this.getConfig('domain', null);
+    prepareResources(resources) {
+        const distributionConfig = resources.Resources.ApiDistribution.Properties.DistributionConfig;
 
-    if (domain !== null) {
-      distributionConfig.Aliases = Array.isArray(domain) ? domain : [ domain ];
-    } else {
-      delete distributionConfig.Aliases;
+        this.prepareLogging(distributionConfig);
+        this.prepareDomain(distributionConfig);
+        this.preparePriceClass(distributionConfig);
+        this.prepareOrigins(distributionConfig);
+        this.preparePathPattern(distributionConfig);
+        this.prepareComment(distributionConfig);
+        this.prepareCertificate(distributionConfig);
+        this.prepareWaf(distributionConfig);
+        this.prepareS3(resources.Resources);
     }
-  }
 
-  preparePriceClass(distributionConfig) {
-    const priceClass = this.getConfig('priceClass', 'PriceClass_All');
-    distributionConfig.PriceClass = priceClass;
-  }
+    prepareLogging(distributionConfig) {
+        const loggingBucket = this.getConfig('logging.bucket', null);
 
-  prepareOrigins(distributionConfig) {
-    for(var origin of distributionConfig.Origins) {
-      if (origin.Id === 'ApiGateway') {
-        origin.OriginPath = `/${this.getStage()}`;
-      }
+        if (loggingBucket !== null) {
+            distributionConfig.Logging.Bucket = loggingBucket;
+            distributionConfig.Logging.Prefix = this.getConfig('logging.prefix', '');
+
+        } else {
+            delete distributionConfig.Logging;
+        }
     }
-  }
 
-  prepareComment(distributionConfig) {
-    const name = this.serverless.getProvider('aws').naming.getApiGatewayName();
-    distributionConfig.Comment = `Serverless Managed ${name}`;
-  }
+    prepareDomain(distributionConfig) {
+        const domain = this.getConfig('domain', null);
 
-  prepareCertificate(distributionConfig) {
-    const certificate = this.getConfig('certificate', null);
-
-    if (certificate !== null) {
-      distributionConfig.ViewerCertificate.AcmCertificateArn = certificate;
-    } else {
-      delete distributionConfig.ViewerCertificate;
+        if (domain !== null) {
+            distributionConfig.Aliases = Array.isArray(domain) ? domain : [domain];
+        } else {
+            delete distributionConfig.Aliases;
+        }
     }
-  }
 
-  prepareWaf(distributionConfig) {
-    const waf = this.getConfig('waf', null);
-
-    if (waf !== null) {
-      distributionConfig.WebACLId = waf;
-    } else {
-      delete distributionConfig.WebACLId;
+    preparePriceClass(distributionConfig) {
+        const priceClass = this.getConfig('priceClass', 'PriceClass_All');
+        distributionConfig.PriceClass = priceClass;
     }
-  }
 
-  prepareS3(resources) {
-    const bucketName = this.getConfig('bucketName', null);
-
-    if (bucketName !== null) {
-      const stageBucketName = `${this.serverless.service.service}-${this.getStage()}-${bucketName}`;
-      resources.WebAppS3Bucket.Properties.BucketName = stageBucketName;
-      resources.WebAppS3BucketPolicy.Properties.Bucket = stageBucketName;
+    prepareOrigins(distributionConfig) {
+        for (var origin of distributionConfig.Origins) {
+            if (origin.Id === 'ApiGateway') {
+                origin.OriginPath = `/${this.getStage()}`;
+            }
+        }
     }
-  }
 
-  getConfig(field, defaultValue) {
-    return _.get(this.serverless, `service.custom.apiCloudFront.${field}`, defaultValue)
-  }
+    preparePathPattern(distributionConfig) {
+        const apiPath = this.getConfig('apiPath', 'api');
+        for (let cacheBehavior of distributionConfig.CacheBehaviors) {
+            if (cacheBehavior.TargetOriginId === 'ApiGateway') {
+                cacheBehavior.PathPattern = `${apiPath}/*`;
+            }
+        }
+    }
 
-  getStage() {
-      // find the correct stage name
-      var stage = this.serverless.service.provider.stage;
-      if (this.serverless.variables.options.stage) {
-          stage = this.serverless.variables.options.stage;
-      }
-      return stage;
-  }
+    prepareComment(distributionConfig) {
+        const name = this.serverless.getProvider('aws').naming.getApiGatewayName();
+        distributionConfig.Comment = `Serverless Managed ${name}`;
+    }
+
+    prepareCertificate(distributionConfig) {
+        const certificate = this.getConfig('certificate', null);
+
+        if (certificate !== null) {
+            distributionConfig.ViewerCertificate.AcmCertificateArn = certificate;
+        } else {
+            delete distributionConfig.ViewerCertificate;
+        }
+    }
+
+    prepareWaf(distributionConfig) {
+        const waf = this.getConfig('waf', null);
+
+        if (waf !== null) {
+            distributionConfig.WebACLId = waf;
+        } else {
+            delete distributionConfig.WebACLId;
+        }
+    }
+
+    prepareS3(resources) {
+        const bucketName = this.getConfig('bucketName', null);
+
+        if (bucketName !== null) {
+            const stageBucketName = `${this.serverless.service.service}-${this.getStage()}-${bucketName}`;
+            resources.WebAppS3Bucket.Properties.BucketName = stageBucketName;
+            resources.WebAppS3BucketPolicy.Properties.Bucket = stageBucketName;
+        }
+    }
+
+    getConfig(field, defaultValue) {
+        return _.get(this.serverless, `service.custom.apiCloudFront.${field}`, defaultValue)
+    }
+
+    getStage() {
+        // find the correct stage name
+        var stage = this.serverless.service.provider.stage;
+        if (this.serverless.variables.options.stage) {
+            stage = this.serverless.variables.options.stage;
+        }
+        return stage;
+    }
 }
 
 module.exports = ServerlessApiCloudFrontPlugin;

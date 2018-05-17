@@ -10,7 +10,7 @@ to API Gateway.
 
 **:zap: Pros**
 
-- Allows you to set-up custom domain for your S3 hosted site and API Gateway
+- Allows you to set-up custom domain for a S3 hosted site and API Gateway
 - Free SSL using AWS CertificateManager
 - No CORS needed
 - Enables CDN caching of resources - so you don't waste Lambda invocations or API Gateway traffic
@@ -20,7 +20,7 @@ to API Gateway.
 - [Web Application Firewall](https://aws.amazon.com/waf/) support - enable AWS WAF to protect your API from security threats
 
 ## Getting started
-**First** Install and configure.
+**First**, Install and configure
 
 #### Installation
 
@@ -365,14 +365,6 @@ Use this parameter if you do not want a confirmation prompt to interrupt automat
 ## Maintainers
 - Andy Hahn - [andrewphahn](https://github.com/andrewphahn)
 
-## Contributors
-- [redroot](https://github.com/redroot)
-- [amsross](https://github.com/amsross)
-- [pradel](https://github.com/pradel)
-- [daguix](https://github.com/daguix)
-- [shentonfreude](https://github.com/shentonfreude)
-- [evanseeds](https://github.com/evanseeds)
-- [wzedi](https://github.com/wzedi)
 
 Forked from the [**serverless-api-cloudfront**](https://github.com/Droplr/serverless-api-cloudfront/)  
 Borrowed heavily from the [**serverless-finch**](https://github.com/fernando-mc/serverless-finch/)  

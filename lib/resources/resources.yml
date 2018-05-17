@@ -1,0 +1,132 @@
+---
+Resources:
+  ## Specifying the S3 Bucket for Web App
+  WebAppS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: WebAppS3BucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+  ## Specifying the policies to make sure all files inside the Bucket are available to CloudFront
+  WebAppS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: WebAppS3BucketName
+      PolicyDocument:
+        Statement:
+          - Sid: OAIGetObject
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::Join:
+                - " "
+                - - arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity
+                  - Ref: S3OriginAccessIdentity
+            Action:
+            - s3:GetObject
+            Resource:
+              Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - Ref: WebAppS3Bucket
+                - "/*"
+  S3OriginAccessIdentity:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Serverless managed web app S3 bucket origin-access-identity
+  ApiDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+        - Id: WebApp
+          DomainName:
+            Fn::GetAtt: [WebAppS3Bucket, DomainName]
+          S3OriginConfig:
+            OriginAccessIdentity:
+              Fn::Join:
+              - ''
+              - - origin-access-identity/cloudfront/
+                - Ref: S3OriginAccessIdentity
+        - Id: ApiGateway
+          DomainName:
+            Fn::Join:
+              - ""
+              - - Ref: ApiGatewayRestApi
+                - ".execute-api."
+                - Ref: AWS::Region
+                - ".amazonaws.com"
+          CustomOriginConfig:
+            HTTPPort: '80'
+            HTTPSPort: '443'
+            OriginProtocolPolicy: https-only
+            OriginSSLProtocols: [ "TLSv1", "TLSv1.1", "TLSv1.2" ]
+          OriginPath: "/dev"
+        Enabled: true
+        HttpVersion: http2
+        Comment: cdn for api gateway
+        Aliases:
+          - domain.tld
+        PriceClass: PriceClass_All
+        DefaultRootObject: index.html
+        ## Since the Single Page App is taking care of the routing we need to make sure ever path is served with index.html
+        ## The only exception are files that actually exist e.h. app.js, reset.css
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          ## The origin id defined above
+          TargetOriginId: WebApp
+          ## Defining if and how the QueryString and Cookies are forwarded to the origin which in this case is S3
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ## The protocol that users can use to access the files in the origin. To allow HTTP use `allow-all`
+          ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+            CachedMethods:
+            - HEAD
+            - GET
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Accept
+                - Referer
+                - Authorization
+                - Content-Type
+              Cookies:
+                Forward: all
+            MinTTL: '0'
+            DefaultTTL: '0'
+            TargetOriginId: ApiGateway
+            ViewerProtocolPolicy: https-only
+            PathPattern: api/*
+        ViewerCertificate:
+          AcmCertificateArn: arn
+          SslSupportMethod: sni-only
+        Logging:
+          IncludeCookies: 'false'
+          Bucket: ''
+          Prefix: ''
+        WebACLId: waf-id
+
+Outputs:
+  ApiDistribution:
+    Value:
+      Fn::GetAtt: [ ApiDistribution, DomainName ]

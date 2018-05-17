@@ -1,22 +1,24 @@
 {
-  "name": "serverless-api-cloudfront",
-  "version": "0.9.3",
+  "name": "fullstack-serverless",
+  "version": "0.5.0",
   "engines": {
     "node": ">=4.0"
   },
-  "description": "CloudFront distribution in front of your API Gateway",
-  "author": "Droplr, Inc.",
+  "description": "A fullstack serverless web app with a CloudFront distribution in front of your API Gateway and static content from S3",
+  "author": "MadSkills.io",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Droplr/serverless-api-cloudfront"
+    "url": "https://github.com/MadSkills-io/fullstack-serverless"
   },
   "keywords": [
     "serverless",
+    "fullstack",
     "serverless plugin",
     "api gateway",
     "cloudfront",
-    "api gateway",
+    "s3",
+    "cloudformation",
     "lambda",
     "aws",
     "aws lambda",
@@ -25,8 +27,13 @@
   ],
   "main": "index.js",
   "dependencies": {
+    "async": "^2.6.0",
+    "bluebird": "^3.5.1",
     "chalk": "^2.0.0",
+    "is_js": "^0.9.0",
     "js-yaml": "^3.10.0",
-    "lodash": "^4.13.1"
+    "lodash": "^4.13.1",
+    "mime": "^1.2.11",
+    "prompt-confirm": "^1.2.0"
   }
 }

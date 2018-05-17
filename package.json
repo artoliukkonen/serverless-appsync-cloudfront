@@ -1,6 +1,6 @@
 {
   "name": "fullstack-serverless",
-  "version": "0.9.3",
+  "version": "0.5.0",
   "engines": {
     "node": ">=4.0"
   },
@@ -13,10 +13,12 @@
   },
   "keywords": [
     "serverless",
+    "fullstack",
     "serverless plugin",
     "api gateway",
     "cloudfront",
-    "api gateway",
+    "s3",
+    "cloudformation",
     "lambda",
     "aws",
     "aws lambda",

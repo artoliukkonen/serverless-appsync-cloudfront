@@ -100,7 +100,7 @@ class ServerlessFullstackPlugin {
         if (clientCommand && this.cliOptions['generate-client'] !== false) {
             const args = clientCommand.split(' ');
             const command = args.shift();
-            return new BbPromise(this.preformClientGeneration.bind(this, command, args, clientSrcPath));
+            return new BbPromise(this.performClientGeneration.bind(this, command, args, clientSrcPath));
 
         } else {
             this.serverless.cli.log(`Skipping client generation...`);
@@ -109,7 +109,7 @@ class ServerlessFullstackPlugin {
         return BbPromise.resolve();
     }
 
-    preformClientGeneration(command, args, clientSrcPath, resolve, reject) {
+    performClientGeneration(command, args, clientSrcPath, resolve, reject) {
         this.serverless.cli.log(`Generating client...`);
         const proc = spawn(command, args, {cwd: clientSrcPath, env: process.env});
 
@@ -124,8 +124,8 @@ class ServerlessFullstackPlugin {
         });
 
         proc.on('close', (code) => {
-            this.serverless.cli.log(`Client generation process succeeded...`);
             if (code === 0) {
+                this.serverless.cli.log(`Client generation process succeeded...`);
                 resolve();
             } else {
                 reject(new this.error(`Client generation failed with code ${code}`));
@@ -140,9 +140,7 @@ class ServerlessFullstackPlugin {
             bucketName,
             headerSpec,
             indexDoc,
-            errorDoc,
-            redirectAllRequestsTo,
-            routingRules;
+            errorDoc;
 
         return this.validateConfig()
             .then(() => {
@@ -162,8 +160,6 @@ class ServerlessFullstackPlugin {
                 headerSpec = this.options.objectHeaders;
                 indexDoc = this.options.indexDocument || "index.html";
                 errorDoc = this.options.errorDocument || "error.html";
-                redirectAllRequestsTo = this.options.redirectAllRequestsTo || null;
-                routingRules = this.options.routingRules || null;
 
                 const deployDescribe = ['This deployment will:'];
 

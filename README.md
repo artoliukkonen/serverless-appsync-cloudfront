@@ -2,7 +2,7 @@
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 [![npm version](https://badge.fury.io/js/fullstack-serverless.svg)](https://badge.fury.io/js/fullstack-serverless)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Droplr/serverless-api-cloudfront/master/LICENSE)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/MadSkills-io/fullstack-serverless/master/LICENSE)
 [![npm downloads](https://img.shields.io/npm/dt/fullstack-serverless.svg?style=flat)](https://www.npmjs.com/package/fullstack-serverless)
 
 Automatically creates properly configured AWS CloudFront distribution that serves static web content from S3 and routes API traffic
@@ -346,7 +346,7 @@ _optional_, default `false` (generates client code by default if `clientCommand`
 serverless client deploy --no-generate-client
 ```
 
-Use this parameter if you do not want to delete the contents of your bucket before deployment. Files uploaded during deployment will still replace any corresponding files already in your bucket.
+Use this parameter if you do not want to generate the client code before deploying. Files uploaded during deployment will still replace any corresponding files already in your bucket.
 
 ---
 

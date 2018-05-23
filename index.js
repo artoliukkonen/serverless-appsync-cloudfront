@@ -29,7 +29,8 @@ class ServerlessFullstackPlugin {
             'client:deploy:deploy': this.processDeployment.bind(this),
             'client:remove:remove': this.removeDeployedResources.bind(this),
             'after:aws:deploy:deploy:updateStack': () => this.serverless.pluginManager.run(['client', 'deploy']),
-            'before:remove:remove': () => this.serverless.pluginManager.run(['client', 'remove'])
+            'before:remove:remove': () => this.serverless.pluginManager.run(['client', 'remove']),
+            'before:aws:package:finalize:mergeCustomProviderResources': this.checkForApiGataway.bind(this)
         };
 
         this.commands = {
@@ -222,6 +223,23 @@ class ServerlessFullstackPlugin {
 
         this.prepareResources(resources);
         return _.merge(baseResources, resources);
+    }
+
+    checkForApiGataway() {
+        const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
+        const apiGatewayConfig = baseResources.Resources.ApiGatewayRestApi;
+        if (!apiGatewayConfig) {
+            this.serverless.cli.log(`ApiGatewayRestApi not found, removing orgin from CloudFront...`);
+            const distributionConfig = baseResources.Resources.ApiDistribution.Properties.DistributionConfig;
+            distributionConfig.Origins = _.filter(distributionConfig.Origins, (origin => {
+                return origin.Id !== 'ApiGateway';
+            }));
+            distributionConfig.CacheBehaviors = _.filter(distributionConfig.CacheBehaviors, (cacheBehavior => {
+                return cacheBehavior.TargetOriginId !== 'ApiGateway';
+            }));
+        }
+
+        return baseResources;
     }
 
     printSummary() {

@@ -5,7 +5,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/MadSkills-io/fullstack-serverless/master/LICENSE)
 [![npm downloads](https://img.shields.io/npm/dt/fullstack-serverless.svg?style=flat)](https://www.npmjs.com/package/fullstack-serverless)
 
-Automatically creates properly configured AWS CloudFront distribution that serves static web content from S3 and routes API traffic
+A [serverless](http://www.serverless.com) plugin that automatically creates an AWS CloudFront distribution that serves static web content from S3 and optionally routes API traffic
 to API Gateway.
 
 **:zap: Pros**
@@ -19,13 +19,20 @@ to API Gateway.
 - Real world [access log](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html) - out of the box, API Gateway currently does not provide any kind of real "apache-like" access logs for your invocations
 - [Web Application Firewall](https://aws.amazon.com/waf/) support - enable AWS WAF to protect your API from security threats
 
+## Before you begin
+* Install the serverless framework
+```bash
+npm install -g serverless
+```
+* [Setup an AWS account and configure access](https://serverless.com/framework/docs/providers/aws/guide/credentials/)
+
 ## Getting started
 **First**, Install and configure
 
 #### Installation
 
-```
-$ npm install --save-dev fullstack-serverless
+```bash
+npm install --save-dev fullstack-serverless
 ```
 
 #### Configuration
@@ -80,7 +87,7 @@ echo "error page" >> client/dist/error.html
 
 **Third**, run the plugin (this can take several minutes the first time), and visit your new website!
 
-```
+```bash
 serverless deploy [--no-delete-contents] [--no-generate-client]
 ```
 
@@ -150,7 +157,7 @@ custom:
 
 Use this parameter to specify the path prefix your API Gateway methods will be available through on your CloudFront distribution (custom domain)
 
-* `apiPath` must be included in the path for the lambdas you want exposed through CloudFront (your custom domain). Not all your methods need to be exposed through CloudFront. For some things, esp. those that are not public facing (eg. third web hooks) you may want to use the ApiGateway URL and not expose them through CloudFront to control access and cost.
+* If `http` events are defined, `apiPath` must be included in the path for the lambdas you want exposed through CloudFront (your custom domain). Not all your methods need to be exposed through CloudFront. For some things, esp. those that are not public facing (eg. third web hooks) you may want to use the ApiGateway URL and not expose them through CloudFront to control access and cost.
 
 ```yaml
 functions:

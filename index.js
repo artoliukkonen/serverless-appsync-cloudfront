@@ -277,7 +277,7 @@ class ServerlessFullstackPlugin {
         this.prepareComment(distributionConfig);
         this.prepareCertificate(distributionConfig);
         this.prepareWaf(distributionConfig);
-        this.prepareSinglePageApp(distributionConfig);
+        this.prepareSinglePageApp(resources.Resources);
         this.prepareS3(resources.Resources);
     }
 
@@ -358,18 +358,59 @@ class ServerlessFullstackPlugin {
         }
     }
 
-    prepareSinglePageApp(distributionConfig) {
+    prepareSinglePageApp(resources) {
+        const distributionConfig = resources.ApiDistribution.Properties.DistributionConfig;
         const isSinglePageApp = this.getConfig('singlePageApp', false);
         if (isSinglePageApp) {
             this.serverless.cli.log(`Configuring distrobution for single page web app...`);
             const indexDocument = this.getConfig('indexDocument', 'index.html')
             for (let errorResponse of distributionConfig.CustomErrorResponses) {
                 if (errorResponse.ErrorCode === '403') {
-                    errorResponse.ResponsePagePath = `/${indexDocument}`
+                    errorResponse.ResponsePagePath = `/${indexDocument}`;
+                }
+            }
+
+            // Remove public read access to bucket, as all access is through the API for single page apps
+            const statements = resources.WebAppS3BucketPolicy.Properties.PolicyDocument.Statement;
+            resources.WebAppS3BucketPolicy.Properties.PolicyDocument.Statement = _.filter(statements, (statement) => {
+                return statement.Sid !== 'AllowPublicRead';
+            });
+
+            for (let origin of distributionConfig.Origins) {
+                if (origin.Id === 'WebApp') {
+                    delete origin.CustomOriginConfig;
                 }
             }
         } else {
             delete distributionConfig.CustomErrorResponses;
+            delete resources.S3OriginAccessIdentity;
+
+            // Remove API access to S3 bucket since all content will be served through http
+            const statements = resources.WebAppS3BucketPolicy.Properties.PolicyDocument.Statement;
+            resources.WebAppS3BucketPolicy.Properties.PolicyDocument.Statement = _.filter(statements, (statement) => {
+                return statement.Sid !== 'OAIGetObject';
+            });
+
+
+            for (let origin of distributionConfig.Origins) {
+                if (origin.Id === 'WebApp') {
+                    delete origin.S3OriginConfig;
+                    origin.DomainName = {
+                        // Select hostname
+                        "Fn::Select": ["1",
+                            {
+                                // Split URL into protocol and hostname
+                                "Fn::Split": ["://",
+                                    {
+                                        // Get the bucket URL
+                                        'Fn::GetAtt': ["WebAppS3Bucket", "WebsiteURL"]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
         }
     }
 

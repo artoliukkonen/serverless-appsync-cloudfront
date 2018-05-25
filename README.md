@@ -157,7 +157,7 @@ custom:
 
 Use this parameter to specify the path prefix your API Gateway methods will be available through on your CloudFront distribution (custom domain)
 
-* If `http` events are defined, `apiPath` must be included in the path for the lambdas you want exposed through CloudFront (your custom domain). Not all your methods need to be exposed through CloudFront. For some things, esp. those that are not public facing (eg. third web hooks) you may want to use the ApiGateway URL and not expose them through CloudFront to control access and cost.
+* If `http` events are defined, `apiPath` must be included in the path for the lambdas you want exposed through CloudFront (your custom domain). Not all your methods need to be exposed through CloudFront. For some things, esp. those that are not public facing (eg. third party web hooks) you may want to use the ApiGateway URL and not expose them through CloudFront to control access and cost.
 
 ```yaml
 functions:

@@ -31,6 +31,18 @@ Resources:
               - - 'arn:aws:s3:::'
                 - Ref: WebAppS3Bucket
                 - "/*"
+          - Sid: AllowPublicRead
+            Effect: Allow
+            Principal:
+              AWS: '*'
+            Action:
+            - s3:GetObject
+            Resource:
+              Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - Ref: WebAppS3Bucket
+                - "/*"
   S3OriginAccessIdentity:
     Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
     Properties:
@@ -50,6 +62,11 @@ Resources:
               - ''
               - - origin-access-identity/cloudfront/
                 - Ref: S3OriginAccessIdentity
+          CustomOriginConfig:
+            HTTPPort: '80'
+            HTTPSPort: '443'
+            OriginProtocolPolicy: http-only
+            OriginSSLProtocols: [ "TLSv1", "TLSv1.1", "TLSv1.2" ]
         - Id: ApiGateway
           DomainName:
             Fn::Join:

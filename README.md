@@ -370,9 +370,10 @@ Use this parameter if you do not want a confirmation prompt to interrupt automat
 ---
 
 ## Maintainers
-- Andy Hahn - [andrewphahn](https://github.com/andrewphahn)
+- Andy Hahn - [andrewphahn](https://github.com/andrewphahn) from [_MadSkills.io_](http://madskills.io)
 
 
 Forked from the [**serverless-api-cloudfront**](https://github.com/Droplr/serverless-api-cloudfront/)  
 Borrowed heavily from the [**serverless-finch**](https://github.com/fernando-mc/serverless-finch/)  
-Initial CloudFormation template from [**Full Stack Serverless Web Apps with AWS**](https://medium.com/99xtechnology/full-stack-serverless-web-apps-with-aws-189d87da024a/)
+Initial CloudFormation template from [**Full Stack Serverless Web Apps with AWS**](https://medium.com/99xtechnology/full-stack-serverless-web-apps-with-aws-189d87da024a/)  
+Inspiration from [**serverless-stack.com**](https://serverless-stack.com/)

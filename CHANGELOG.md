@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2018-5-26
+- Documentation updates
+
 ## [0.5.2] - 2018-05-25
 
 ### Added
@@ -21,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.0...v0.5.1

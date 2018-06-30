@@ -370,6 +370,9 @@ class ServerlessFullstackPlugin {
                 }
             }
 
+            // Cloudfront default root object
+            distributionConfig.DefaultRootObject = indexDocument;
+
             // Remove public read access to bucket, as all access is through the API for single page apps
             const statements = resources.WebAppS3BucketPolicy.Properties.PolicyDocument.Statement;
             resources.WebAppS3BucketPolicy.Properties.PolicyDocument.Statement = _.filter(statements, (statement) => {

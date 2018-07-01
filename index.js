@@ -112,7 +112,7 @@ class ServerlessFullstackPlugin {
 
     performClientGeneration(command, args, clientSrcPath, resolve, reject) {
         this.serverless.cli.log(`Generating client...`);
-        const proc = spawn(command, args, {cwd: clientSrcPath, env: process.env});
+        const proc = spawn(command, args, {cwd: clientSrcPath, env: process.env, shell: true});
 
         proc.stdout.on('data', (data) => {
             const printableData = data ? `${data}`.trim() : '';

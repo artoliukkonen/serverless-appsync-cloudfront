@@ -451,8 +451,8 @@ class ServerlessFullstackPlugin {
     getStage() {
         // find the correct stage name
         var stage = this.serverless.service.provider.stage;
-        if (this.serverless.variables.cliOptions && this.serverless.variables.cliOptions.stage) {
-            stage = this.serverless.variables.cliOptions.stage;
+        if (this.cliOptions && this.cliOptions.stage) {
+            stage = this.cliOptions.stage;
         }
         return stage;
     }

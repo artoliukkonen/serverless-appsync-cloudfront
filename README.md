@@ -6,7 +6,9 @@
 [![npm downloads](https://img.shields.io/npm/dt/fullstack-serverless.svg?style=flat)](https://www.npmjs.com/package/fullstack-serverless)
 
 A [serverless](http://www.serverless.com) plugin that automatically creates an AWS CloudFront distribution that serves static web content from S3 and optionally routes API traffic
-to API Gateway.
+to API Gateway.  
+
+Home page - https://www.madskills.io/fullstack-serverless/
 
 **:zap: Pros**
 

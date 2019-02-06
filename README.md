@@ -256,7 +256,7 @@ _optional_, no default
 
 ```yaml
 custom:
-  client:
+  fullstack:
     ...
     objectHeaders:
       ALL_OBJECTS:

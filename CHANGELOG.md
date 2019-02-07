@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7] - 2019-2-6
+- Add objectHeaders to the documentation. Thanks @superandrew213!
+
 ## [0.5.6] - 2018-7-14
 
 ### Fixed
@@ -41,7 +44,8 @@ Better support for generating client code on Windows
 
 - Initial release
 
-[Unreleased]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.6...HEAD
+[Unreleased]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.7...HEAD
+[0.5.7]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.3...v0.5.4

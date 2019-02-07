@@ -39,7 +39,7 @@ npm install --save-dev fullstack-serverless
 
 #### Configuration
 
-* All apiCloudFront configuration parameters are optional - e.g. don't provide ACM Certificate ARN
+* All fullstack-serverless configuration parameters are optional - e.g. don't provide ACM Certificate ARN
   to use default CloudFront certificate (which works only for default cloudfront.net domain).
 * This plugin **does not** set-up automatically Route53 for newly created CloudFront distribution.
   After creating CloudFront distribution, manually add Route53 ALIAS record pointing to your
@@ -409,6 +409,7 @@ Use this parameter if you do not want a confirmation prompt to interrupt automat
 
 ## Contributors
 - [jlaramie](https://github.com/jlaramie)
+- [superandrew213](https://github.com/superandrew213)
 
 ## Credits
 Forked from the [**serverless-api-cloudfront**](https://github.com/Droplr/serverless-api-cloudfront/)  

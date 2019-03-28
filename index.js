@@ -10,6 +10,7 @@ class ServerlessAppSyncCloudFrontPlugin {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
+    this.givenDomainName = this.serverless.service.custom.appSyncCloudFront.domainName;
 
     this.hooks = {
       'before:deploy:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
@@ -19,6 +20,7 @@ class ServerlessAppSyncCloudFrontPlugin {
     const credentials = this.serverless.providers.aws.getCredentials();
     const acmCredentials = Object.assign({}, credentials, { region: 'us-east-1' });
     this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
+    this.route53 = new this.serverless.providers.aws.sdk.Route53(credentials);
   }
 
   async createDeploymentArtifacts() {
@@ -34,7 +36,7 @@ class ServerlessAppSyncCloudFrontPlugin {
     return _.merge(baseResources, resources);
   }
 
-  printSummary() {
+  async printSummary() {
     const awsInfo = _.find(this.serverless.pluginManager.getPlugins(), (plugin) => {
       return plugin.constructor.name === 'AwsInfo';
     });
@@ -52,26 +54,24 @@ class ServerlessAppSyncCloudFrontPlugin {
       return;
     }
 
-    const cnameDomain = this.getConfig('domain', null)
-      || _.get(this.serverless, 'service.custom.customDomain.domainName', null);
-
+    const cnameDomain = this.getConfig('domainName', null);
     this.serverless.cli.consoleLog(chalk.yellow('CloudFront domain name'));
     this.serverless.cli.consoleLog(`  ${apiDistributionDomain.OutputValue} (CNAME: ${cnameDomain || '-'})`);
+
+    if (cnameDomain) {
+      this.serverless.cli.consoleLog(`AppSync: ${chalk.yellow(`Creating Route53 records for ${cnameDomain}...`)}`);
+
+      this.changeResourceRecordSet('UPSERT', apiDistributionDomain.OutputValue);
+    }
   }
 
   /**
    * Gets Certificate ARN that most closely matches domain name OR given Cert ARN if provided
    */
   async getCertArn() {
-    if (this.serverless.service.custom.customDomain.certificateArn) {
-      this.serverless.cli.log(
-        `Selected specific certificateArn ${this.serverless.service.custom.customDomain.certificateArn}`);
-      return this.serverless.service.custom.customDomain.certificateArn;
-    }
-
     let certificateArn; // The arn of the choosen certificate
-    let { certificateName } = this.serverless.service.custom.customDomain; // The certificate name
-    const { domainName } = this.serverless.service.custom.customDomain; // Domain name
+    let { certificateName } = this.serverless.service.custom.appSyncCloudFront; // The certificate name
+    const { domainName } = this.serverless.service.custom.appSyncCloudFront; // Domain name
     try {
       const certData = await this.acm.listCertificates(
         { CertificateStatuses: certStatuses },
@@ -114,6 +114,113 @@ class ServerlessAppSyncCloudFrontPlugin {
     return certificateArn;
   }
 
+  /**
+ * Change A Alias record through Route53 based on given action
+ * @param action: String descriptor of change to be made. Valid actions are ['UPSERT', 'DELETE']
+ * @param domain: DomainInfo object containing info about custom domain
+ */
+  async changeResourceRecordSet(action, domain) {
+    if (action !== "UPSERT" && action !== "DELETE") {
+      throw new Error(`Error: Invalid action "${action}" when changing Route53 Record.
+                Action must be either UPSERT or DELETE.\n`);
+    }
+
+    const createRoute53Record = this.getConfig('createRoute53Record', null);
+    if (createRoute53Record !== undefined && createRoute53Record === false) {
+      this.serverless.cli.log("Skipping creation of Route53 record.");
+      return;
+    }
+    // Set up parameters
+    const route53HostedZoneId = await this.getRoute53HostedZoneId();
+    const Changes = ["A", "AAAA"].map(Type => ({
+      Action: action,
+      ResourceRecordSet: {
+        AliasTarget: {
+          DNSName: domain,
+          EvaluateTargetHealth: false,
+          HostedZoneId: 'Z2FDTNDATAQYW2', // CloudFront HZID is always Z2FDTNDATAQYW2
+        },
+        Name: this.givenDomainName,
+        Type,
+      },
+    }));
+    const params = {
+      ChangeBatch: {
+        Changes,
+        Comment: 'Record created by serverless-appsync-cloudfront',
+      },
+      HostedZoneId: route53HostedZoneId,
+    };
+    // Make API call
+    try {
+      await this.route53.changeResourceRecordSets(params).promise();
+    } catch (err) {
+      throw new Error(`Error: Failed to ${action} A Alias for ${this.givenDomainName}\n`);
+    }
+  }
+
+  /**
+   * Gets Route53 HostedZoneId from user or from AWS
+   */
+  async getRoute53HostedZoneId() {
+    if (this.serverless.service.custom.appSyncCloudFront.hostedZoneId) {
+      this.serverless.cli.log(
+        `Selected specific hostedZoneId ${this.serverless.service.custom.appSyncCloudFront.hostedZoneId}`);
+      return this.serverless.service.custom.appSyncCloudFront.hostedZoneId;
+    }
+
+    const filterZone = this.hostedZonePrivate !== undefined;
+    if (filterZone && this.hostedZonePrivate) {
+      this.serverless.cli.log("Filtering to only private zones.");
+    } else if (filterZone && !this.hostedZonePrivate) {
+      this.serverless.cli.log("Filtering to only public zones.");
+    }
+
+    let hostedZoneData;
+    const givenDomainNameReverse = this.givenDomainName.split(".").reverse();
+
+    try {
+      hostedZoneData = await this.route53.listHostedZones({}).promise();
+      const targetHostedZone = hostedZoneData.HostedZones
+        .filter((hostedZone) => {
+          let hostedZoneName;
+          if (hostedZone.Name.endsWith(".")) {
+            hostedZoneName = hostedZone.Name.slice(0, -1);
+          } else {
+            hostedZoneName = hostedZone.Name;
+          }
+          if (!filterZone || this.hostedZonePrivate === hostedZone.Config.PrivateZone) {
+            const hostedZoneNameReverse = hostedZoneName.split(".").reverse();
+
+            if (givenDomainNameReverse.length === 1
+              || (givenDomainNameReverse.length >= hostedZoneNameReverse.length)) {
+              for (let i = 0; i < hostedZoneNameReverse.length; i += 1) {
+                if (givenDomainNameReverse[i] !== hostedZoneNameReverse[i]) {
+                  return false;
+                }
+              }
+              return true;
+            }
+          }
+          return false;
+        })
+        .sort((zone1, zone2) => zone2.Name.length - zone1.Name.length)
+        .shift();
+
+      if (targetHostedZone) {
+        const hostedZoneId = targetHostedZone.Id;
+        // Extracts the hostzone Id
+        const startPos = hostedZoneId.indexOf("e/") + 2;
+        const endPos = hostedZoneId.length;
+        return hostedZoneId.substring(startPos, endPos);
+      }
+    } catch (err) {
+      this.logIfDebug(err);
+      throw new Error(`Error: Unable to list hosted zones in Route53.\n${err}`);
+    }
+    throw new Error(`Error: Could not find hosted zone "${this.givenDomainName}"`);
+  }
+
 
   async prepareResources(resources) {
     const distributionConfig = resources.Resources.AppSyncApiDistribution.Properties.DistributionConfig;
@@ -144,9 +251,7 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   prepareDomain(distributionConfig) {
-    const domain = this.getConfig('domain', null)
-      || _.get(this.serverless, 'service.custom.customDomain.domainName', null);
-
+    const domain = this.getConfig('domainName', null);
     if (domain !== null) {
       distributionConfig.Aliases = Array.isArray(domain) ? domain : [domain];
     } else {

@@ -1,48 +1,40 @@
-# serverless-api-cloudfront
+# serverless-appsync-cloudfront
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
-[![npm version](https://badge.fury.io/js/serverless-api-cloudfront.svg)](https://badge.fury.io/js/serverless-api-cloudfront)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Droplr/serverless-api-cloudfront/master/LICENSE)
-[![npm downloads](https://img.shields.io/npm/dt/serverless-api-cloudfront.svg?style=flat)](https://www.npmjs.com/package/serverless-api-cloudfront)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/artoliukkonen/serverless-appsync-cloudfront/master/LICENSE)
 
 Automatically creates properly configured AWS CloudFront distribution that routes traffic
-to API Gateway.
+to AppSync.
 
-Due to limitations of API Gateway Custom Domains, we realized that setting self-managed CloudFront distribution is much more powerful.
+This plugin is modified from [serverless-api-cloudfront](https://github.com/Droplr/serverless-api-cloudfront) plugin to support AppSync instead of API Gateway.
 
 **:zap: Pros**
 
-- Allows you to set-up custom domain for your API Gateway
-- Enables CDN caching of resources - so you don't waste Lambda invocations or API Gateway traffic
-  for serving static files (just set proper Cache-Control in API responses)
-- Much more CloudWatch statistics of API usage (like bandwidth metrics)
-- Real world [access log](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html) - out of the box, API Gateway currently does not provide any kind of real "apache-like" access logs for your invocations
+- Allows you to set-up custom domain for your AppSync
+- Zero setup with [serverless-custom-domain](https://github.com/amplify-education/serverless-domain-manager) (but works even without it)
 - [Web Application Firewall](https://aws.amazon.com/waf/) support - enable AWS WAF to protect your API from security threats
 
 ## Installation
 
-```
-$ npm install --save-dev serverless-api-cloudfront
-```
+Either point to this repository from your package.json or clone this repo to `.serverless_plugins` folder in your project.
+
+TODO: pending NPM release
 
 ## Configuration
 
-* All apiCloudFront configuration parameters are optional - e.g. don't provide ACM Certificate ARN
-  to use default CloudFront certificate (which works only for default cloudfront.net domain).
-* This plugin **does not** set-up automatically Route53 for newly created CloudFront distribution.
-  After creating CloudFront distribution, manually add Route53 ALIAS record pointing to your
-  CloudFront domain name.
+* All appSyncCloudFront configuration parameters are optional - e.g. don't provide ACM Certificate ARN to use default CloudFront certificate (which works only for default cloudfront.net domain).
+* For Route53 & custom domain, install [serverless-custom-domain](https://github.com/amplify-education/serverless-domain-manager). This plugin automatically reads the configuration of that plugin and uses correct cert for CloudFront. If you don't use that plugin you need to manually setup Route53. 
 * First deployment may be quite long (e.g. 10 min) as Serverless is waiting for
   CloudFormation to deploy CloudFront distribution.
-
+* **No custom configuration required if using [serverless-custom-domain](https://github.com/amplify-education/serverless-domain-manager)**
 ```
 # add in your serverless.yml
 
 plugins:
-  - serverless-api-cloudfront
+  - serverless-appsync-cloudfront
 
 custom:
-  apiCloudFront:
+  appSyncCloudFront: # Only if not using serverless-custom-domain
     domain: my-custom-domain.com
     certificate: arn:aws:acm:us-east-1:000000000000:certificate/00000000-1111-2222-3333-444444444444
     waf: 00000000-0000-0000-0000-000000000000

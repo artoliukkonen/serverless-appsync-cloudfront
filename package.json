@@ -1,22 +1,21 @@
 {
-  "name": "serverless-api-cloudfront",
+  "name": "serverless-appsync-cloudfront",
   "version": "0.9.5",
   "engines": {
-    "node": ">=6.4"
+    "node": ">=8.10"
   },
-  "description": "CloudFront distribution in front of your API Gateway",
-  "author": "Droplr, Inc.",
+  "description": "CloudFront distribution in front of your AppSync",
+  "author": "Arto Liukkonen",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Droplr/serverless-api-cloudfront"
+    "url": "https://github.com/artoliukkonen/serverless-appsync-cloudfront"
   },
   "keywords": [
     "serverless",
     "serverless plugin",
-    "api gateway",
     "cloudfront",
-    "api gateway",
+    "appsync",
     "lambda",
     "aws",
     "aws lambda",

@@ -70,6 +70,7 @@ custom:
     logging:
       bucket: my-bucket.s3.amazonaws.com
       prefix: my-prefix
+    minimumProtocolVersion: TLSv1.2_2018
 ```
 
 

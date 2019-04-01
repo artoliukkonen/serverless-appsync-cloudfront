@@ -279,6 +279,8 @@ class ServerlessFullstackPlugin {
         this.prepareWaf(distributionConfig);
         this.prepareSinglePageApp(resources.Resources);
         this.prepareS3(resources.Resources);
+        this.prepareMinimumProtocolVersion(distributionConfig);
+
     }
 
     prepareLogging(distributionConfig) {
@@ -347,6 +349,14 @@ class ServerlessFullstackPlugin {
         }
     }
 
+   prepareMinimumProtocolVersion(distributionConfig) {
+    const minimumProtocolVersion = this.getConfig('minimumProtocolVersion', undefined);
+
+    if (minimumProtocolVersion) {
+      distributionConfig.ViewerCertificate.MinimumProtocolVersion = minimumProtocolVersion;
+    }
+  }
+    
     prepareWaf(distributionConfig) {
         const waf = this.getConfig('waf', null);
 

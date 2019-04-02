@@ -71,6 +71,7 @@ custom:
       bucket: my-bucket.s3.amazonaws.com
       prefix: my-prefix
     minimumProtocolVersion: TLSv1.2_2018
+    priceClass: PriceClass_100
 ```
 
 
@@ -364,6 +365,41 @@ custom:
 
 Real world [access log](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html) - out of the box, API Gateway currently does not provide any kind of real "apache-like" access logs for your invocations
          
+---
+
+**priceClass**
+
+_optional_, default: `PriceClass_All`
+
+```yaml
+custom:
+  fullstack:
+    ...
+    priceClass: PriceClass_100
+    ...
+```
+
+CloudFront [PriceClass](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html) - can be PriceClass_All (default), PriceClass_100 or PriceClass_200
+
+---
+
+**minimumProtocolVersion**
+
+_optional_, default: `TLSv1`
+
+```yaml
+custom:
+  fullstack:
+    ...
+    minimumProtocolVersion: TLSv1.2_2018
+    ...
+```
+
+Set minimum SSL/TLS [protocol version](https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ViewerCertificate.html#cloudfront-Type-ViewerCertificate-MinimumProtocolVersion) - `TLSv1_2016`, `TLSv1.1_2016`, `TLSv1.2_2018` or `SSLv3`
+
+- The minimum SSL/TLS protocol that CloudFront uses to communicate with viewers
+- The cipher that CloudFront uses to encrypt the content that it returns to viewers
+
 ---
 
 ### Command-line Parameters

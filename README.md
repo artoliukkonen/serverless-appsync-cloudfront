@@ -447,6 +447,7 @@ Use this parameter if you do not want a confirmation prompt to interrupt automat
 ## Contributors
 - [jlaramie](https://github.com/jlaramie)
 - [superandrew213](https://github.com/superandrew213)
+- [harmon25](https://github.com/harmon25)
 
 ## Credits
 Forked from the [**serverless-api-cloudfront**](https://github.com/Droplr/serverless-api-cloudfront/)  

@@ -356,7 +356,7 @@ class ServerlessFullstackPlugin {
       distributionConfig.ViewerCertificate.MinimumProtocolVersion = minimumProtocolVersion;
     }
   }
-    
+
     prepareWaf(distributionConfig) {
         const waf = this.getConfig('waf', null);
 
@@ -372,7 +372,7 @@ class ServerlessFullstackPlugin {
         const distributionConfig = resources.ApiDistribution.Properties.DistributionConfig;
         const isSinglePageApp = this.getConfig('singlePageApp', false);
         if (isSinglePageApp) {
-            this.serverless.cli.log(`Configuring distrobution for single page web app...`);
+            this.serverless.cli.log(`Configuring distribution for single page web app...`);
             const indexDocument = this.getConfig('indexDocument', 'index.html')
             for (let errorResponse of distributionConfig.CustomErrorResponses) {
                 if (errorResponse.ErrorCode === '403') {

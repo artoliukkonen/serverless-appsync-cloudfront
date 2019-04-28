@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enable compression of web assets using CloudFront. This changes the defautlt behaviour (no compression). To continue **not** using compression for your web assets set `compressWebContent: false`.
 
 ### Fixed
--  Typo in log output
+-  Typo in log output - Thanks @jmortlock
 
 ## [0.5.8] - 2019-4-3
 - Add priceClass & minimumProtocolVersion. Thanks @harmon25

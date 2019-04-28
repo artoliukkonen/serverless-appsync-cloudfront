@@ -465,6 +465,7 @@ Use this parameter if you do not want a confirmation prompt to interrupt automat
 - [jlaramie](https://github.com/jlaramie)
 - [superandrew213](https://github.com/superandrew213)
 - [harmon25](https://github.com/harmon25)
+- [jmortlock](https://github.com/jmortlock)
 
 ## Credits
 Forked from the [**serverless-api-cloudfront**](https://github.com/Droplr/serverless-api-cloudfront/)  

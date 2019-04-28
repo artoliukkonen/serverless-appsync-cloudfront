@@ -280,6 +280,7 @@ class ServerlessFullstackPlugin {
         this.prepareSinglePageApp(resources.Resources);
         this.prepareS3(resources.Resources);
         this.prepareMinimumProtocolVersion(distributionConfig);
+        this.prepareCompressWebContent(distributionConfig);
 
     }
 
@@ -447,6 +448,12 @@ class ServerlessFullstackPlugin {
 
         resources.WebAppS3Bucket.Properties.WebsiteConfiguration.IndexDocument = indexDocument;
         resources.WebAppS3Bucket.Properties.WebsiteConfiguration.ErrorDocument = errorDocument;
+    }
+
+    prepareCompressWebContent(distributionConfig) {
+        const compressWebContent = this.getConfig('compressWebContent', true);
+
+        distributionConfig.DefaultCacheBehavior.Compress = compressWebContent;
     }
 
     getBucketName(bucketName) {

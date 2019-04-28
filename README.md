@@ -63,6 +63,7 @@ custom:
     indexDocument: index.html                  # The index document to use
     errorDocument: error.html                  # The error document to use
     singlePageApp: false                       # If true 403 errors will be rerouted (missing assets) to your root index document to support single page apps like React and Angular where the js framework handles routing
+    compressWebContent: true                   # Use compression when serving web content
     apiPath: api                               # The path prefix for your API Gateway lambdas. The path for the lambda http event trigger needs to start with this too eg. api/myMethod 
     clientCommand: gulp dist                   # Command to generate the client assets. Defaults to doing nothing
     clientSrcPath: client                      # The path to where you want to run the clientCommand
@@ -298,6 +299,22 @@ custom:
 ```
 
 If true 403 errors will be rerouted (missing assets) to your root index document to support single page apps like React and Angular where the js framework handles routing
+    
+---
+
+**compressWebContent**
+
+_optional_, default: `true`
+
+```yaml
+custom:
+  fullstack:
+    ...
+    compressWebContent: true
+    ...
+```
+
+Instruct CloudFront to use compression when serving web content, see [Serving Compressed Files](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html) in the Amazon CloudFront Developer Guide.
     
 ---
 

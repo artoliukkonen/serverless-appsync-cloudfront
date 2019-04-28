@@ -99,6 +99,8 @@ Resources:
             - GET
             - HEAD
             - OPTIONS
+          ## Compress web content: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html
+          Compress: true
           ## The origin id defined above
           TargetOriginId: WebApp
           ## Defining if and how the QueryString and Cookies are forwarded to the origin which in this case is S3

@@ -13,7 +13,7 @@ class ServerlessAppSyncCloudFrontPlugin {
     this.givenDomainName = this.serverless.service.custom.appSyncCloudFront.domainName;
 
     this.hooks = {
-      'before:deploy:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
+      'package:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
       'aws:info:displayStackOutputs': this.printSummary.bind(this),
     };
 

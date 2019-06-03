@@ -37,18 +37,18 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   async printSummary() {
-    const awsInfo = _.find(this.serverless.pluginManager.getPlugins(), (plugin) => {
-      return plugin.constructor.name === 'AwsInfo';
-    });
+    const awsInfo = _.find(this.serverless.pluginManager.getPlugins(), plugin => (
+      plugin.constructor.name === 'AwsInfo'
+    ));
 
     if (!awsInfo || !awsInfo.gatheredData) {
       return;
     }
 
     const { outputs } = awsInfo.gatheredData;
-    const apiDistributionDomain = _.find(outputs, (output) => {
-      return output.OutputKey === 'AppSyncApiDistribution';
-    });
+    const apiDistributionDomain = _.find(outputs, output => (
+      output.OutputKey === 'AppSyncApiDistribution'
+    ));
 
     if (!apiDistributionDomain || !apiDistributionDomain.OutputValue) {
       return;
@@ -120,19 +120,19 @@ class ServerlessAppSyncCloudFrontPlugin {
  * @param domain: DomainInfo object containing info about custom domain
  */
   async changeResourceRecordSet(action, domain) {
-    if (action !== "UPSERT" && action !== "DELETE") {
+    if (action !== 'UPSERT' && action !== 'DELETE') {
       throw new Error(`Error: Invalid action "${action}" when changing Route53 Record.
                 Action must be either UPSERT or DELETE.\n`);
     }
 
     const createRoute53Record = this.getConfig('createRoute53Record', null);
     if (createRoute53Record !== undefined && createRoute53Record === false) {
-      this.serverless.cli.log("Skipping creation of Route53 record.");
+      this.serverless.cli.log('Skipping creation of Route53 record.');
       return;
     }
     // Set up parameters
     const route53HostedZoneId = await this.getRoute53HostedZoneId();
-    const Changes = ["A", "AAAA"].map(Type => ({
+    const Changes = ['A', 'AAAA'].map(Type => ({
       Action: action,
       ResourceRecordSet: {
         AliasTarget: {
@@ -171,26 +171,26 @@ class ServerlessAppSyncCloudFrontPlugin {
 
     const filterZone = this.hostedZonePrivate !== undefined;
     if (filterZone && this.hostedZonePrivate) {
-      this.serverless.cli.log("Filtering to only private zones.");
+      this.serverless.cli.log('Filtering to only private zones.');
     } else if (filterZone && !this.hostedZonePrivate) {
-      this.serverless.cli.log("Filtering to only public zones.");
+      this.serverless.cli.log('Filtering to only public zones.');
     }
 
     let hostedZoneData;
-    const givenDomainNameReverse = this.givenDomainName.split(".").reverse();
+    const givenDomainNameReverse = this.givenDomainName.split('.').reverse();
 
     try {
       hostedZoneData = await this.route53.listHostedZones({}).promise();
       const targetHostedZone = hostedZoneData.HostedZones
         .filter((hostedZone) => {
           let hostedZoneName;
-          if (hostedZone.Name.endsWith(".")) {
+          if (hostedZone.Name.endsWith('.')) {
             hostedZoneName = hostedZone.Name.slice(0, -1);
           } else {
             hostedZoneName = hostedZone.Name;
           }
           if (!filterZone || this.hostedZonePrivate === hostedZone.Config.PrivateZone) {
-            const hostedZoneNameReverse = hostedZoneName.split(".").reverse();
+            const hostedZoneNameReverse = hostedZoneName.split('.').reverse();
 
             if (givenDomainNameReverse.length === 1
               || (givenDomainNameReverse.length >= hostedZoneNameReverse.length)) {
@@ -210,7 +210,7 @@ class ServerlessAppSyncCloudFrontPlugin {
       if (targetHostedZone) {
         const hostedZoneId = targetHostedZone.Id;
         // Extracts the hostzone Id
-        const startPos = hostedZoneId.indexOf("e/") + 2;
+        const startPos = hostedZoneId.indexOf('e/') + 2;
         const endPos = hostedZoneId.length;
         return hostedZoneId.substring(startPos, endPos);
       }

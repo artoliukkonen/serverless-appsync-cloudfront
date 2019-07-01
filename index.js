@@ -94,7 +94,26 @@ class ServerlessFullstackPlugin {
             });
     }
 
+    setEnvironmentVariables() {
+        this.serverless.cli.log('Setting the environment variables');
+        const environment = this.serverless.service.provider.environment;
+
+        if (!environment) {
+          return this.serverless.cli.log(
+            'No environment variables detected. Skipping step...'
+          );
+        }
+
+        Object.keys(environment).forEach(variable => {
+          this.serverless.cli.log(
+            `Setting ${variable} to ${environment[variable]}`
+          );
+          process.env[variable] = environment[variable];
+        });
+    }
+
     generateClient() {
+        this.setEnvironmentVariables();
 
         const clientCommand = this.options.clientCommand;
         const clientSrcPath = this.options.clientSrcPath || '.';

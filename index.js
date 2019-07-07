@@ -94,8 +94,20 @@ class ServerlessFullstackPlugin {
             });
     }
 
-    generateClient() {
+    setClientEnv() {
+        this.serverless.cli.log(`Setting the environment variables...`);
+        const serverlessEnv = this.serverless.service.provider.environment;
 
+        if (!serverlessEnv) {
+          return this.serverless.cli.log(
+            `No environment variables detected. Skipping step...`
+          );
+        }
+
+        return Object.assign({}, process.env, serverlessEnv);
+    }
+
+    generateClient() {
         const clientCommand = this.options.clientCommand;
         const clientSrcPath = this.options.clientSrcPath || '.';
         if (clientCommand && this.cliOptions['generate-client'] !== false) {
@@ -112,7 +124,8 @@ class ServerlessFullstackPlugin {
 
     performClientGeneration(command, args, clientSrcPath, resolve, reject) {
         this.serverless.cli.log(`Generating client...`);
-        const proc = spawn(command, args, {cwd: clientSrcPath, env: process.env, shell: true});
+        const clientEnv = this.setClientEnv();
+        const proc = spawn(command, args, {cwd: clientSrcPath, env: clientEnv, shell: true});
 
         proc.stdout.on('data', (data) => {
             const printableData = data ? `${data}`.trim() : '';

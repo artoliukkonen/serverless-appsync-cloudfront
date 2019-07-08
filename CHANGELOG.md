@@ -10,10 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.1] - 2019-7-7
 Thanks @haochang
 
-- Pass the environment variables from the severless template to the process generating the client
+- Pass the environment variables from the serverless template to the process generating the client
 
 ## [0.6.0] - 2019-4-28
-- Enable compression of web assets using CloudFront. This changes the defautlt behaviour (no compression). To continue **not** using compression for your web assets set `compressWebContent: false`.
+- Enable compression of web assets using CloudFront. This changes the default behavior (no compression). To continue **not** using compression for your web assets set `compressWebContent: false`.
 
 ### Fixed
 -  Typo in log output - Thanks @jmortlock

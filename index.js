@@ -11,6 +11,7 @@ const Confirm = require('prompt-confirm');
 const bucketUtils = require('./lib/bucketUtils');
 const uploadDirectory = require('./lib/upload');
 const validateClient = require('./lib/validate');
+const {getCloudFrontDomain, invalidateCloudfrontDistribution} = require('./lib/cloudFront');
 
 class ServerlessFullstackPlugin {
     constructor(serverless, cliOptions) {
@@ -23,7 +24,7 @@ class ServerlessFullstackPlugin {
 
         this.hooks = {
             'package:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
-            'aws:info:displayStackOutputs': this.printSummary.bind(this),
+            'aws:info:displayStackOutputs': this.invalidateAndThenPrintSummary.bind(this),
             'client:client': () => this.serverless.cli.log(this.commands.client.usage),
             'before:client:deploy:deploy': this.generateClient.bind(this),
             'client:deploy:deploy': this.processDeployment.bind(this),
@@ -255,28 +256,27 @@ class ServerlessFullstackPlugin {
         return baseResources;
     }
 
+    async invalidateAndThenPrintSummary() {
+        const region =
+            this.cliOptions.region ||
+            this.options.region ||
+            _.get(this.serverless, 'service.provider.region');
+
+        this.serverless.cli.log(`Invalidating CloudFront distribution...`);
+        await invalidateCloudfrontDistribution(this.serverless, region);
+
+        this.printSummary();
+    }
+
     printSummary() {
-        const awsInfo = _.find(this.serverless.pluginManager.getPlugins(), (plugin) => {
-            return plugin.constructor.name === 'AwsInfo';
-        });
+        const apiDistributionDomain = getCloudFrontDomain(this.serverless),
+            cnameDomain = this.getConfig('domain', '-');
 
-        if (!awsInfo || !awsInfo.gatheredData) {
+        if (!apiDistributionDomain)
             return;
-        }
-
-        const outputs = awsInfo.gatheredData.outputs;
-        const apiDistributionDomain = _.find(outputs, (output) => {
-            return output.OutputKey === 'ApiDistribution';
-        });
-
-        if (!apiDistributionDomain || !apiDistributionDomain.OutputValue) {
-            return;
-        }
-
-        const cnameDomain = this.getConfig('domain', '-');
 
         this.serverless.cli.consoleLog(chalk.yellow('CloudFront domain name'));
-        this.serverless.cli.consoleLog(`  ${apiDistributionDomain.OutputValue} (CNAME: ${cnameDomain})`);
+        this.serverless.cli.consoleLog(`  ${apiDistributionDomain} (CNAME: ${cnameDomain})`);
     }
 
     prepareResources(resources) {

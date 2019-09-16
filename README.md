@@ -64,7 +64,8 @@ custom:
     errorDocument: error.html                  # The error document to use
     singlePageApp: false                       # If true 403 errors will be rerouted (missing assets) to your root index document to support single page apps like React and Angular where the js framework handles routing
     compressWebContent: true                   # Use compression when serving web content
-    apiPath: api                               # The path prefix for your API Gateway lambdas. The path for the lambda http event trigger needs to start with this too eg. api/myMethod 
+    apiPath: api                               # The path prefix for your API Gateway lambdas. The path for the lambda http event trigger needs to start with this too eg. api/myMethod
+    apiGatewayRestApiId: a12bc34df5            # If "Api Gateway Rest Api" is not part of the same serverless template, you can set your API id here 
     clientCommand: gulp dist                   # Command to generate the client assets. Defaults to doing nothing
     clientSrcPath: client                      # The path to where you want to run the clientCommand
     waf: 00000000-0000-0000-0000-000000000000  # ID of the Web Application Firewall. Defaults to not used
@@ -175,6 +176,23 @@ functions:
         method: post
         integration: lambda
 ```
+
+---
+
+**apiGatewayRestApiId**
+
+_optional_, default: `not set`
+
+```yaml
+custom:
+  fullstack:
+    ...
+    apiGatewayRestApiId: a12bc34df5
+    ...
+```
+
+This is only needed if "Api Gateway Rest Api" is not part of the same serverless template and the API id is not defined in [provider -> apiGateway](https://serverless.com/framework/docs/providers/aws/events/apigateway/#share-api-gateway-and-api-resources) section.
+The id can be found in API Gateway url. For example, if your Rest API url is `https://a12bc34df5.execute-api.eu-central-1.amazonaws.com`, API id will be `a12bc34df5`. 
 
 ---
 

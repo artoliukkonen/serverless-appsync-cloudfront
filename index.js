@@ -249,18 +249,52 @@ class ServerlessFullstackPlugin {
     checkForApiGataway() {
         const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
         const apiGatewayConfig = baseResources.Resources.ApiGatewayRestApi;
-        if (!apiGatewayConfig) {
-            this.serverless.cli.log(`ApiGatewayRestApi not found, removing orgin from CloudFront...`);
-            const distributionConfig = baseResources.Resources.ApiDistribution.Properties.DistributionConfig;
-            distributionConfig.Origins = _.filter(distributionConfig.Origins, (origin => {
-                return origin.Id !== 'ApiGateway';
-            }));
-            distributionConfig.CacheBehaviors = _.filter(distributionConfig.CacheBehaviors, (cacheBehavior => {
-                return cacheBehavior.TargetOriginId !== 'ApiGateway';
-            }));
+
+        if (!apiGatewayConfig && !this.setApiGatewayIdFromConfig(baseResources)) {
+            this.removeApiGatewayOrigin(baseResources);
         }
 
         return baseResources;
+    }
+
+    removeApiGatewayOrigin(baseResources) {
+        this.serverless.cli.log(`ApiGatewayRestApi not found, removing orgin from CloudFront...`);
+        const distributionConfig = baseResources.Resources.ApiDistribution.Properties.DistributionConfig;
+        distributionConfig.Origins = _.filter(distributionConfig.Origins, (origin => {
+            return origin.Id !== 'ApiGateway';
+        }));
+        distributionConfig.CacheBehaviors = _.filter(distributionConfig.CacheBehaviors, (cacheBehavior => {
+            return cacheBehavior.TargetOriginId !== 'ApiGateway';
+        }));
+    }
+
+    setApiGatewayIdFromConfig(baseResources) {
+        const restApiId = this.getRestApiId();
+
+        if (!restApiId) {
+            return false;
+        }
+
+        const distributionConfig = baseResources.Resources.ApiDistribution.Properties.DistributionConfig;
+        const apiOrigin = distributionConfig.Origins.find(origin => origin.Id === 'ApiGateway');
+
+        apiOrigin.DomainName = {
+            'Fn::Join': ['', [restApiId, '.execute-api.', {
+                Ref: 'AWS::Region'
+            }, '.amazonaws.com']]
+        };
+
+        return true;
+    }
+
+    getRestApiId() {
+        const apiGatewaySection = this.serverless.service.provider.apiGateway;
+
+        if (apiGatewaySection && apiGatewaySection.restApiId) {
+            return apiGatewaySection.restApiId;
+        }
+
+        return this.getConfig('apiGatewayRestApiId', null);
     }
 
     printSummary() {

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2019-9-15
+Thanks @hakimio
+
+- Add ability to invalidate the CloudFront distribution when deploying the client
+- 
+### Fixed
+- Using shared API Gateway #11
+
 ## [0.6.1] - 2019-7-7
 Thanks @haochang
 
@@ -58,7 +66,8 @@ Better support for generating client code on Windows
 
 - Initial release
 
-[Unreleased]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.8...v0.6.0
 [0.5.8]: https://github.com/MadSkills-io/fullstack-serverless/compare/v0.5.7...v0.5.8

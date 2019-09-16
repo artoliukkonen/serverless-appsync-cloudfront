@@ -11,6 +11,7 @@ const Confirm = require('prompt-confirm');
 const bucketUtils = require('./lib/bucketUtils');
 const uploadDirectory = require('./lib/upload');
 const validateClient = require('./lib/validate');
+const invalidateCloudfrontDistribution = require('./lib/cloudFront');
 
 class ServerlessFullstackPlugin {
     constructor(serverless, cliOptions) {
@@ -219,6 +220,13 @@ class ServerlessFullstackPlugin {
                 }
                 this.serverless.cli.log('Client deployment cancelled');
                 return BbPromise.resolve();
+            })
+            .then(() => {
+                if (this.cliOptions['invalidate-distribution'] === false) {
+                    this.serverless.cli.log(`Skipping cloudfront invalidation...`);
+                } else {
+                    return invalidateCloudfrontDistribution(this.serverless);
+                }
             })
             .catch(error => {
                 return BbPromise.reject(new this.error(error));

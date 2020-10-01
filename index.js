@@ -16,14 +16,14 @@ class ServerlessAppSyncCloudFrontPlugin {
       'package:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
       'aws:info:displayStackOutputs': this.printSummary.bind(this),
     };
+  }
 
+  async createDeploymentArtifacts() {
+    this.givenDomainName = this.serverless.service.custom.appSyncCloudFront.domainName;
     const credentials = this.serverless.providers.aws.getCredentials();
     const acmCredentials = Object.assign({}, credentials, { region: 'us-east-1' });
     this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
     this.route53 = new this.serverless.providers.aws.sdk.Route53(credentials);
-  }
-
-  async createDeploymentArtifacts() {
     const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
 
     const filename = path.resolve(__dirname, 'resources.yml');

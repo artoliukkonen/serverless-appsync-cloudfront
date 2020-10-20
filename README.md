@@ -47,6 +47,7 @@ custom:
       - per_page
     priceClass: PriceClass_100
     minimumProtocolVersion: TLSv1
+    enabled: true
 ```
 
 ### Notes
@@ -98,6 +99,12 @@ minimumProtocolVersion: TLSv1
 ```
 
 [minimum-protocol-version]: https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ViewerCertificate.html#cloudfront-Type-ViewerCertificate-MinimumProtocolVersion
+
+* `enabled` can be `true` (default) or `false`. Can be used to disable cloudfront distribution deployment.
+
+```
+enabled: true
+```
 
 ### IAM Policy
 

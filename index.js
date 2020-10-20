@@ -19,21 +19,21 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   async createDeploymentArtifacts() {
-    this.givenDomainName = this.serverless.service.custom.appSyncCloudFront.domainName;
-    const credentials = this.serverless.providers.aws.getCredentials();
-    const acmCredentials = Object.assign({}, credentials, { region: 'us-east-1' });
-    this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
-    this.route53 = new this.serverless.providers.aws.sdk.Route53(credentials);
-    const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
+    if (this.serverless.service.custom.appSyncCloudFront.enabled !== false) {
+      this.givenDomainName = this.serverless.service.custom.appSyncCloudFront.domainName;
+      const credentials = this.serverless.providers.aws.getCredentials();
+      const acmCredentials = Object.assign({}, credentials, { region: 'us-east-1' });
+      this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
+      this.route53 = new this.serverless.providers.aws.sdk.Route53(credentials);
+      const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
 
-    const filename = path.resolve(__dirname, 'resources.yml');
-    const content = fs.readFileSync(filename, 'utf-8');
-    const resources = yaml.safeLoad(content, {
-      filename,
-    });
+      const filename = path.resolve(__dirname, 'resources.yml');
+      const content = fs.readFileSync(filename, 'utf-8');
+      const resources = yaml.safeLoad(content, { filename });
 
-    await this.prepareResources(resources);
-    return _.merge(baseResources, resources);
+      await this.prepareResources(resources);
+      return _.merge(baseResources, resources);
+    }
   }
 
   async printSummary() {

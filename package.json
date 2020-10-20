@@ -1,6 +1,6 @@
 {
   "name": "serverless-appsync-cloudfront",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "engines": {
     "node": ">=8.10"
   },

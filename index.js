@@ -197,7 +197,8 @@ class ServerlessAppSyncCloudFrontPlugin {
     }
 
     let hostedZoneData;
-    const givenDomainNameReverse = this.givenDomainName.split(".").reverse();
+    const givenDomainName = this.getConfig("domainName", "");
+    const givenDomainNameReverse = givenDomainName.split(".").reverse();
 
     try {
       hostedZoneData = await this.route53.listHostedZones({}).promise();
@@ -241,7 +242,6 @@ class ServerlessAppSyncCloudFrontPlugin {
         return hostedZoneId.substring(startPos, endPos);
       }
     } catch (err) {
-      this.logIfDebug(err);
       throw new Error(`Error: Unable to list hosted zones in Route53.\n${err}`);
     }
     throw new Error(

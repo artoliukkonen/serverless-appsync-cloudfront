@@ -5,53 +5,65 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-        - Id: AppSync
-          DomainName: 
-            { "Fn::Select" : [ "2", { "Fn::Split": ["/", Fn::GetAtt: [ GraphQlApi, GraphQLUrl ]]}] }
-          CustomOriginConfig:
-            HTTPPort: '80'
-            HTTPSPort: '443'
-            OriginProtocolPolicy: https-only
-            OriginSSLProtocols: [ "TLSv1", "TLSv1.1", "TLSv1.2" ]
-          OriginPath: ""
+          - Id: AppSync
+            DomainName:
+              {
+                "Fn::Select":
+                  [
+                    "2",
+                    {
+                      "Fn::Split": ["/", Fn::GetAtt: [GraphQlApi, GraphQLUrl]],
+                    },
+                  ],
+              }
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: ["TLSv1", "TLSv1.1", "TLSv1.2"]
+            OriginPath: ""
         Enabled: true
         HttpVersion: http2
         Comment: CDN for AppSync
         Aliases:
           - domain.tld
-        PriceClass: PriceClass_All
+        PriceClass: PriceClass_100
         DefaultCacheBehavior:
           AllowedMethods:
-          - DELETE
-          - GET
-          - HEAD
-          - OPTIONS
-          - PATCH
-          - POST
-          - PUT
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
           CachedMethods:
-          - HEAD
-          - GET
+            - HEAD
+            - OPTIONS
+            - GET
           ForwardedValues:
             QueryString: true
-            Headers: []
+            Headers:
+              - x-api-key
+              - Authorization
             Cookies:
               Forward: all
-          MinTTL: '0'
-          DefaultTTL: '0'
+          MinTTL: 0
+          DefaultTTL: 0
           TargetOriginId: AppSync
           ViewerProtocolPolicy: redirect-to-https
+          Compress: true
         CustomErrorResponses: []
         ViewerCertificate:
           AcmCertificateArn: arn
           SslSupportMethod: sni-only
         Logging:
-          IncludeCookies: 'false'
-          Bucket: ''
-          Prefix: ''
+          IncludeCookies: "false"
+          Bucket: ""
+          Prefix: ""
         WebACLId: waf-id
 
 Outputs:
   AppSyncApiDistribution:
     Value:
-      Fn::GetAtt: [ AppSyncApiDistribution, DomainName ]
+      Fn::GetAtt: [AppSyncApiDistribution, DomainName]

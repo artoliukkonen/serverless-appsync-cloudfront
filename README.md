@@ -15,14 +15,16 @@ This plugin is modified from [serverless-api-cloudfront](https://github.com/Drop
 
 ## Installation
 
-Either point to this repository from your package.json or clone this repo to `.serverless_plugins` folder in your project.
+`npm i --save-dev serverless-appsync-cloudfront`
 
-TODO: pending NPM release
+or
+
+`yarn add -D serverless-appsync-cloudfront`
 
 ## Configuration
 
-* All appSyncCloudFront configuration parameters are optional - e.g. don't provide ACM Certificate ARN to use default CloudFront certificate (which works only for default cloudfront.net domain).
-* First deployment may be quite long (e.g. 10 min) as Serverless is waiting for CloudFormation to deploy CloudFront distribution.
+- All appSyncCloudFront configuration parameters are optional - e.g. don't provide ACM Certificate ARN to use default CloudFront certificate (which works only for default cloudfront.net domain).
+- First deployment may be quite long (e.g. 10 min) as Serverless is waiting for CloudFormation to deploy CloudFront distribution.
 
 ```
 # add in your serverless.yml
@@ -30,6 +32,7 @@ TODO: pending NPM release
 plugins:
   - serverless-appsync-cloudfront
 
+# All of these custom parameters are optional
 custom:
   appSyncCloudFront:
     domainName: my-custom-domain.com
@@ -52,7 +55,7 @@ custom:
 
 ### Notes
 
-* `domain` can be list, so if you want to add more domains, instead string you list multiple ones:
+- `domain` can be list, so if you want to add more domains, instead string you list multiple ones:
 
 ```
 domain:
@@ -60,14 +63,15 @@ domain:
   - secondary-custom-domain.com
 ```
 
-* `cookies` can be *all* (default), *none* or a list that lists the cookies to whitelist
+- `cookies` can be _all_ (default), _none_ or a list that lists the cookies to whitelist
+
 ```
 cookies:
   - FirstCookieName
   - SecondCookieName
 ```
 
-* [`headers`][headers-default-cache] can be *all*, *none* (default) or a list of headers ([see CloudFront custom behaviour][headers-list]):
+- [`headers`][headers-default-cache] can be _all_, _none_ (default) or a list of headers ([see CloudFront custom behaviour][headers-list]):
 
 ```
 headers: all
@@ -76,14 +80,13 @@ headers: all
 [headers-default-cache]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-defaultcachebehavior.html#cfn-cloudfront-distribution-defaultcachebehavior-forwardedvalues
 [headers-list]: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorCustomOrigin.html#request-custom-headers-behavior
 
-* `querystring` can be *all* (default), *none* or a list, in which case all querystring parameters are forwarded, but cache is based on the list:
+- `querystring` can be _all_ (default), _none_ or a list, in which case all querystring parameters are forwarded, but cache is based on the list:
 
 ```
 querystring: all
 ```
 
-* [`priceClass`][price-class] can be `PriceClass_All` (default), `PriceClass_100` or `PriceClass_200`:
-
+- [`priceClass`][price-class] can be `PriceClass_All` (default), `PriceClass_100` or `PriceClass_200`:
 
 ```
 priceClass: PriceClass_All
@@ -91,8 +94,7 @@ priceClass: PriceClass_All
 
 [price-class]: https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_GetDistributionConfig.html#cloudfront-GetDistributionConfig-response-PriceClass
 
-* [`minimumProtocolVersion`][minimum-protocol-version] can be `TLSv1` (default), `TLSv1_2016`, `TLSv1.1_2016`, `TLSv1.2_2018` or `SSLv3`:
-
+- [`minimumProtocolVersion`][minimum-protocol-version] can be `TLSv1` (default), `TLSv1_2016`, `TLSv1.1_2016`, `TLSv1.2_2018` or `SSLv3`:
 
 ```
 minimumProtocolVersion: TLSv1
@@ -100,7 +102,7 @@ minimumProtocolVersion: TLSv1
 
 [minimum-protocol-version]: https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ViewerCertificate.html#cloudfront-Type-ViewerCertificate-MinimumProtocolVersion
 
-* `enabled` can be `true` (default) or `false`. Can be used to disable cloudfront distribution deployment.
+- `enabled` can be `true` (default) or `false`. Can be used to disable cloudfront distribution deployment.
 
 ```
 enabled: true
@@ -112,10 +114,10 @@ In order to make this plugin work as expected a few additional IAM Policies migh
 
 More specifically this plugin needs the following policies attached:
 
-* `cloudfront:CreateDistribution`
-* `cloudfront:GetDistribution`
-* `cloudfront:UpdateDistribution`
-* `cloudfront:DeleteDistribution`
-* `cloudfront:TagResource`
+- `cloudfront:CreateDistribution`
+- `cloudfront:GetDistribution`
+- `cloudfront:UpdateDistribution`
+- `cloudfront:DeleteDistribution`
+- `cloudfront:TagResource`
 
 You can read more about IAM profiles and policies in the [Serverless documentation](https://serverless.com/framework/docs/providers/aws/guide/credentials#creating-aws-access-keys).

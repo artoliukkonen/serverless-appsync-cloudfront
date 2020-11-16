@@ -1,34 +1,38 @@
-const path = require('path');
-const _ = require('lodash');
-const chalk = require('chalk');
-const yaml = require('js-yaml');
-const fs = require('fs');
+const path = require("path");
+const _ = require("lodash");
+const chalk = require("chalk");
+const yaml = require("js-yaml");
+const fs = require("fs");
 
-const certStatuses = ['PENDING_VALIDATION', 'ISSUED', 'INACTIVE'];
+const certStatuses = ["PENDING_VALIDATION", "ISSUED", "INACTIVE"];
 
 class ServerlessAppSyncCloudFrontPlugin {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
-    this.givenDomainName = this.serverless.service.custom.appSyncCloudFront.domainName;
+    this.givenDomainName = this.getConfig("domainName", null);
 
     this.hooks = {
-      'package:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
-      'aws:info:displayStackOutputs': this.printSummary.bind(this),
+      "package:createDeploymentArtifacts": this.createDeploymentArtifacts.bind(
+        this
+      ),
+      "aws:info:displayStackOutputs": this.printSummary.bind(this),
     };
   }
 
   async createDeploymentArtifacts() {
-    if (this.serverless.service.custom.appSyncCloudFront.enabled !== false) {
-      this.givenDomainName = this.serverless.service.custom.appSyncCloudFront.domainName;
+    if (this.getConfig("enabled", true) !== false) {
       const credentials = this.serverless.providers.aws.getCredentials();
-      const acmCredentials = Object.assign({}, credentials, { region: 'us-east-1' });
+      const acmCredentials = Object.assign({}, credentials, {
+        region: "us-east-1",
+      });
       this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
       this.route53 = new this.serverless.providers.aws.sdk.Route53(credentials);
-      const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
+      const baseResources = this.serverless.service.provider
+        .compiledCloudFormationTemplate;
 
-      const filename = path.resolve(__dirname, 'resources.yml');
-      const content = fs.readFileSync(filename, 'utf-8');
+      const filename = path.resolve(__dirname, "resources.yml");
+      const content = fs.readFileSync(filename, "utf-8");
       const resources = yaml.safeLoad(content, { filename });
 
       await this.prepareResources(resources);
@@ -37,31 +41,39 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   async printSummary() {
-    const awsInfo = _.find(this.serverless.pluginManager.getPlugins(), plugin => (
-      plugin.constructor.name === 'AwsInfo'
-    ));
+    const awsInfo = _.find(
+      this.serverless.pluginManager.getPlugins(),
+      (plugin) => plugin.constructor.name === "AwsInfo"
+    );
 
     if (!awsInfo || !awsInfo.gatheredData) {
       return;
     }
 
     const { outputs } = awsInfo.gatheredData;
-    const apiDistributionDomain = _.find(outputs, output => (
-      output.OutputKey === 'AppSyncApiDistribution'
-    ));
+    const apiDistributionDomain = _.find(
+      outputs,
+      (output) => output.OutputKey === "AppSyncApiDistribution"
+    );
 
     if (!apiDistributionDomain || !apiDistributionDomain.OutputValue) {
       return;
     }
 
-    const cnameDomain = this.getConfig('domainName', null);
-    this.serverless.cli.consoleLog(chalk.yellow('CloudFront domain name'));
-    this.serverless.cli.consoleLog(`  ${apiDistributionDomain.OutputValue} (CNAME: ${cnameDomain || '-'})`);
+    const cnameDomain = this.getConfig("domainName", null);
+    this.serverless.cli.consoleLog(chalk.yellow("CloudFront domain name"));
+    this.serverless.cli.consoleLog(
+      `  ${apiDistributionDomain.OutputValue} (CNAME: ${cnameDomain || "-"})`
+    );
 
     if (cnameDomain) {
-      this.serverless.cli.consoleLog(`AppSync: ${chalk.yellow(`Creating Route53 records for ${cnameDomain}...`)}`);
+      this.serverless.cli.consoleLog(
+        `AppSync: ${chalk.yellow(
+          `Creating Route53 records for ${cnameDomain}...`
+        )}`
+      );
 
-      this.changeResourceRecordSet('UPSERT', apiDistributionDomain.OutputValue);
+      this.changeResourceRecordSet("UPSERT", apiDistributionDomain.OutputValue);
     }
   }
 
@@ -70,12 +82,12 @@ class ServerlessAppSyncCloudFrontPlugin {
    */
   async getCertArn() {
     let certificateArn; // The arn of the choosen certificate
-    let { certificateName } = this.serverless.service.custom.appSyncCloudFront; // The certificate name
-    const { domainName } = this.serverless.service.custom.appSyncCloudFront; // Domain name
+    let certificateName = this.getConfig("certificateName", null);
+    if (!certificateName && !this.givenDomainName) return;
     try {
-      const certData = await this.acm.listCertificates(
-        { CertificateStatuses: certStatuses },
-      ).promise();
+      const certData = await this.acm
+        .listCertificates({ CertificateStatuses: certStatuses })
+        .promise();
 
       // The more specific name will be the longest
       let nameLength = 0;
@@ -83,30 +95,35 @@ class ServerlessAppSyncCloudFrontPlugin {
 
       // Checks if a certificate name is given
       if (certificateName != null) {
-        const foundCertificate = certificates
-          .find(certificate => (certificate.DomainName === certificateName));
+        const foundCertificate = certificates.find(
+          (certificate) => certificate.DomainName === certificateName
+        );
         if (foundCertificate != null) {
           certificateArn = foundCertificate.CertificateArn;
         }
       } else {
-        certificateName = domainName;
+        certificateName = this.givenDomainName;
         certificates.forEach((certificate) => {
           let certificateListName = certificate.DomainName;
           // Looks for wild card and takes it out when checking
-          if (certificateListName[0] === '*') {
+          if (certificateListName[0] === "*") {
             certificateListName = certificateListName.substr(1);
           }
           // Looks to see if the name in the list is within the given domain
           // Also checks if the name is more specific than previous ones
-          if (certificateName.includes(certificateListName)
-            && certificateListName.length > nameLength) {
+          if (
+            certificateName.includes(certificateListName) &&
+            certificateListName.length > nameLength
+          ) {
             nameLength = certificateListName.length;
             certificateArn = certificate.CertificateArn;
           }
         });
       }
     } catch (err) {
-      throw Error(`Error: Could not list certificates in Certificate Manager.\n${err}`);
+      throw Error(
+        `Error: Could not list certificates in Certificate Manager.\n${err}`
+      );
     }
     if (certificateArn == null) {
       throw Error(`Error: Could not find the certificate ${certificateName}.`);
@@ -115,30 +132,30 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   /**
- * Change A Alias record through Route53 based on given action
- * @param action: String descriptor of change to be made. Valid actions are ['UPSERT', 'DELETE']
- * @param domain: DomainInfo object containing info about custom domain
- */
+   * Change A Alias record through Route53 based on given action
+   * @param action: String descriptor of change to be made. Valid actions are ['UPSERT', 'DELETE']
+   * @param domain: DomainInfo object containing info about custom domain
+   */
   async changeResourceRecordSet(action, domain) {
-    if (action !== 'UPSERT' && action !== 'DELETE') {
+    if (action !== "UPSERT" && action !== "DELETE") {
       throw new Error(`Error: Invalid action "${action}" when changing Route53 Record.
                 Action must be either UPSERT or DELETE.\n`);
     }
 
-    const createRoute53Record = this.getConfig('createRoute53Record', null);
+    const createRoute53Record = this.getConfig("createRoute53Record", null);
     if (createRoute53Record !== undefined && createRoute53Record === false) {
-      this.serverless.cli.log('Skipping creation of Route53 record.');
+      this.serverless.cli.log("Skipping creation of Route53 record.");
       return;
     }
     // Set up parameters
     const route53HostedZoneId = await this.getRoute53HostedZoneId();
-    const Changes = ['A', 'AAAA'].map(Type => ({
+    const Changes = ["A", "AAAA"].map((Type) => ({
       Action: action,
       ResourceRecordSet: {
         AliasTarget: {
           DNSName: domain,
           EvaluateTargetHealth: false,
-          HostedZoneId: 'Z2FDTNDATAQYW2', // CloudFront HZID is always Z2FDTNDATAQYW2
+          HostedZoneId: "Z2FDTNDATAQYW2", // CloudFront HZID is always Z2FDTNDATAQYW2
         },
         Name: this.givenDomainName,
         Type,
@@ -147,7 +164,7 @@ class ServerlessAppSyncCloudFrontPlugin {
     const params = {
       ChangeBatch: {
         Changes,
-        Comment: 'Record created by serverless-appsync-cloudfront',
+        Comment: "Record created by serverless-appsync-cloudfront",
       },
       HostedZoneId: route53HostedZoneId,
     };
@@ -155,7 +172,9 @@ class ServerlessAppSyncCloudFrontPlugin {
     try {
       await this.route53.changeResourceRecordSets(params).promise();
     } catch (err) {
-      throw new Error(`Error: Failed to ${action} A Alias for ${this.givenDomainName}\n`);
+      throw new Error(
+        `Error: Failed to ${action} A Alias for ${this.givenDomainName}\n`
+      );
     }
   }
 
@@ -165,35 +184,41 @@ class ServerlessAppSyncCloudFrontPlugin {
   async getRoute53HostedZoneId() {
     if (this.serverless.service.custom.appSyncCloudFront.hostedZoneId) {
       this.serverless.cli.log(
-        `Selected specific hostedZoneId ${this.serverless.service.custom.appSyncCloudFront.hostedZoneId}`);
+        `Selected specific hostedZoneId ${this.serverless.service.custom.appSyncCloudFront.hostedZoneId}`
+      );
       return this.serverless.service.custom.appSyncCloudFront.hostedZoneId;
     }
 
     const filterZone = this.hostedZonePrivate !== undefined;
     if (filterZone && this.hostedZonePrivate) {
-      this.serverless.cli.log('Filtering to only private zones.');
+      this.serverless.cli.log("Filtering to only private zones.");
     } else if (filterZone && !this.hostedZonePrivate) {
-      this.serverless.cli.log('Filtering to only public zones.');
+      this.serverless.cli.log("Filtering to only public zones.");
     }
 
     let hostedZoneData;
-    const givenDomainNameReverse = this.givenDomainName.split('.').reverse();
+    const givenDomainNameReverse = this.givenDomainName.split(".").reverse();
 
     try {
       hostedZoneData = await this.route53.listHostedZones({}).promise();
-      const targetHostedZone = hostedZoneData.HostedZones
-        .filter((hostedZone) => {
+      const targetHostedZone = hostedZoneData.HostedZones.filter(
+        (hostedZone) => {
           let hostedZoneName;
-          if (hostedZone.Name.endsWith('.')) {
+          if (hostedZone.Name.endsWith(".")) {
             hostedZoneName = hostedZone.Name.slice(0, -1);
           } else {
             hostedZoneName = hostedZone.Name;
           }
-          if (!filterZone || this.hostedZonePrivate === hostedZone.Config.PrivateZone) {
-            const hostedZoneNameReverse = hostedZoneName.split('.').reverse();
+          if (
+            !filterZone ||
+            this.hostedZonePrivate === hostedZone.Config.PrivateZone
+          ) {
+            const hostedZoneNameReverse = hostedZoneName.split(".").reverse();
 
-            if (givenDomainNameReverse.length === 1
-              || (givenDomainNameReverse.length >= hostedZoneNameReverse.length)) {
+            if (
+              givenDomainNameReverse.length === 1 ||
+              givenDomainNameReverse.length >= hostedZoneNameReverse.length
+            ) {
               for (let i = 0; i < hostedZoneNameReverse.length; i += 1) {
                 if (givenDomainNameReverse[i] !== hostedZoneNameReverse[i]) {
                   return false;
@@ -203,14 +228,15 @@ class ServerlessAppSyncCloudFrontPlugin {
             }
           }
           return false;
-        })
+        }
+      )
         .sort((zone1, zone2) => zone2.Name.length - zone1.Name.length)
         .shift();
 
       if (targetHostedZone) {
         const hostedZoneId = targetHostedZone.Id;
         // Extracts the hostzone Id
-        const startPos = hostedZoneId.indexOf('e/') + 2;
+        const startPos = hostedZoneId.indexOf("e/") + 2;
         const endPos = hostedZoneId.length;
         return hostedZoneId.substring(startPos, endPos);
       }
@@ -218,17 +244,18 @@ class ServerlessAppSyncCloudFrontPlugin {
       this.logIfDebug(err);
       throw new Error(`Error: Unable to list hosted zones in Route53.\n${err}`);
     }
-    throw new Error(`Error: Could not find hosted zone "${this.givenDomainName}"`);
+    throw new Error(
+      `Error: Could not find hosted zone "${this.givenDomainName}"`
+    );
   }
 
-
   async prepareResources(resources) {
-    const distributionConfig = resources.Resources.AppSyncApiDistribution.Properties.DistributionConfig;
+    const distributionConfig =
+      resources.Resources.AppSyncApiDistribution.Properties.DistributionConfig;
 
     this.prepareLogging(distributionConfig);
     this.prepareDomain(distributionConfig);
     this.preparePriceClass(distributionConfig);
-    // this.prepareOrigins(distributionConfig);
     this.prepareCookies(distributionConfig);
     this.prepareHeaders(distributionConfig);
     this.prepareQueryString(distributionConfig);
@@ -240,18 +267,18 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   prepareLogging(distributionConfig) {
-    const loggingBucket = this.getConfig('logging.bucket', null);
+    const loggingBucket = this.getConfig("logging.bucket", null);
 
     if (loggingBucket !== null) {
       distributionConfig.Logging.Bucket = loggingBucket;
-      distributionConfig.Logging.Prefix = this.getConfig('logging.prefix', '');
+      distributionConfig.Logging.Prefix = this.getConfig("logging.prefix", "");
     } else {
       delete distributionConfig.Logging;
     }
   }
 
   prepareDomain(distributionConfig) {
-    const domain = this.getConfig('domainName', null);
+    const domain = this.getConfig("domainName", null);
     if (domain !== null) {
       distributionConfig.Aliases = Array.isArray(domain) ? domain : [domain];
     } else {
@@ -260,7 +287,7 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   preparePriceClass(distributionConfig) {
-    const priceClass = this.getConfig('priceClass', 'PriceClass_All');
+    const priceClass = this.getConfig("priceClass", "PriceClass_All");
     distributionConfig.PriceClass = priceClass;
   }
 
@@ -269,51 +296,59 @@ class ServerlessAppSyncCloudFrontPlugin {
   // }
 
   prepareCookies(distributionConfig) {
-    const forwardCookies = this.getConfig('cookies', 'all');
-    distributionConfig.DefaultCacheBehavior.ForwardedValues.Cookies.Forward = Array.isArray(forwardCookies) ? 'whitelist' : forwardCookies;
+    const forwardCookies = this.getConfig("cookies", "all");
+    distributionConfig.DefaultCacheBehavior.ForwardedValues.Cookies.Forward = Array.isArray(
+      forwardCookies
+    )
+      ? "whitelist"
+      : forwardCookies;
     if (Array.isArray(forwardCookies)) {
       distributionConfig.DefaultCacheBehavior.ForwardedValues.Cookies.WhitelistedNames = forwardCookies;
     }
   }
 
   prepareHeaders(distributionConfig) {
-    const forwardHeaders = this.getConfig('headers', 'none');
+    const forwardHeaders = this.getConfig("headers", "none");
 
     if (Array.isArray(forwardHeaders)) {
       distributionConfig.DefaultCacheBehavior.ForwardedValues.Headers = forwardHeaders;
     } else {
-      distributionConfig.DefaultCacheBehavior.ForwardedValues.Headers = forwardHeaders === 'none' ? [] : ['*'];
+      distributionConfig.DefaultCacheBehavior.ForwardedValues.Headers =
+        forwardHeaders === "none" ? [] : ["*"];
     }
   }
 
   prepareQueryString(distributionConfig) {
-    const forwardQueryString = this.getConfig('querystring', 'all');
+    const forwardQueryString = this.getConfig("querystring", "all");
 
     if (Array.isArray(forwardQueryString)) {
       distributionConfig.DefaultCacheBehavior.ForwardedValues.QueryString = true;
       distributionConfig.DefaultCacheBehavior.ForwardedValues.QueryStringCacheKeys = forwardQueryString;
     } else {
-      distributionConfig.DefaultCacheBehavior.ForwardedValues.QueryString = forwardQueryString === 'all';
+      distributionConfig.DefaultCacheBehavior.ForwardedValues.QueryString =
+        forwardQueryString === "all";
     }
   }
 
   prepareComment(distributionConfig) {
-    const name = this.serverless.getProvider('aws').naming.getApiGatewayName();
+    const name = this.serverless.getProvider("aws").naming.getApiGatewayName();
     distributionConfig.Comment = `Serverless Managed ${name}`;
   }
 
   async prepareCertificate(distributionConfig) {
-    const certificate = this.getConfig('certificate', null) || await this.getCertArn();
-
-    if (certificate !== null) {
+    const certificate =
+      this.getConfig("certificate", null) || (await this.getCertArn());
+    if (certificate) {
       distributionConfig.ViewerCertificate.AcmCertificateArn = certificate;
     } else {
-      delete distributionConfig.ViewerCertificate;
+      delete distributionConfig.ViewerCertificate.AcmCertificateArn;
+      delete distributionConfig.ViewerCertificate.SslSupportMethod;
+      distributionConfig.ViewerCertificate.CloudFrontDefaultCertificate = true;
     }
   }
 
   prepareWaf(distributionConfig) {
-    const waf = this.getConfig('waf', null);
+    const waf = this.getConfig("waf", null);
 
     if (waf !== null) {
       distributionConfig.WebACLId = waf;
@@ -323,11 +358,15 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   prepareCompress(distributionConfig) {
-    distributionConfig.DefaultCacheBehavior.Compress = (this.getConfig('compress', false) === true);
+    distributionConfig.DefaultCacheBehavior.Compress =
+      this.getConfig("compress", false) === true;
   }
 
   prepareMinimumProtocolVersion(distributionConfig) {
-    const minimumProtocolVersion = this.getConfig('minimumProtocolVersion', undefined);
+    const minimumProtocolVersion = this.getConfig(
+      "minimumProtocolVersion",
+      undefined
+    );
 
     if (minimumProtocolVersion) {
       distributionConfig.ViewerCertificate.MinimumProtocolVersion = minimumProtocolVersion;
@@ -335,7 +374,11 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   getConfig(field, defaultValue) {
-    return _.get(this.serverless, `service.custom.appSyncCloudFront.${field}`, defaultValue);
+    return _.get(
+      this.serverless,
+      `service.custom.appSyncCloudFront.${field}`,
+      defaultValue
+    );
   }
 }
 

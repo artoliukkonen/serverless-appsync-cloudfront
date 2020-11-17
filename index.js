@@ -10,7 +10,6 @@ class ServerlessAppSyncCloudFrontPlugin {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
-    this.givenDomainName = this.getConfig("domainName", null);
 
     this.hooks = {
       "package:createDeploymentArtifacts": this.createDeploymentArtifacts.bind(
@@ -60,7 +59,7 @@ class ServerlessAppSyncCloudFrontPlugin {
       return;
     }
 
-    const cnameDomain = this.getConfig("domainName", null);
+    const cnameDomain = this.getConfig("domainName");
     this.serverless.cli.consoleLog(chalk.yellow("CloudFront domain name"));
     this.serverless.cli.consoleLog(
       `  ${apiDistributionDomain.OutputValue} (CNAME: ${cnameDomain || "-"})`
@@ -73,7 +72,10 @@ class ServerlessAppSyncCloudFrontPlugin {
         )}`
       );
 
-      this.changeResourceRecordSet("UPSERT", apiDistributionDomain.OutputValue);
+      await this.changeResourceRecordSet(
+        "UPSERT",
+        apiDistributionDomain.OutputValue
+      );
     }
   }
 
@@ -82,8 +84,8 @@ class ServerlessAppSyncCloudFrontPlugin {
    */
   async getCertArn() {
     let certificateArn; // The arn of the choosen certificate
-    let certificateName = this.getConfig("certificateName", null);
-    if (!certificateName && !this.givenDomainName) return;
+    let certificateName = this.getConfig("certificateName");
+    if (!certificateName && !this.getConfig("domainName")) return;
     try {
       const certData = await this.acm
         .listCertificates({ CertificateStatuses: certStatuses })
@@ -102,7 +104,7 @@ class ServerlessAppSyncCloudFrontPlugin {
           certificateArn = foundCertificate.CertificateArn;
         }
       } else {
-        certificateName = this.givenDomainName;
+        certificateName = this.getConfig("domainName");
         certificates.forEach((certificate) => {
           let certificateListName = certificate.DomainName;
           // Looks for wild card and takes it out when checking
@@ -142,7 +144,7 @@ class ServerlessAppSyncCloudFrontPlugin {
                 Action must be either UPSERT or DELETE.\n`);
     }
 
-    const createRoute53Record = this.getConfig("createRoute53Record", null);
+    const createRoute53Record = this.getConfig("createRoute53Record");
     if (createRoute53Record !== undefined && createRoute53Record === false) {
       this.serverless.cli.log("Skipping creation of Route53 record.");
       return;
@@ -157,7 +159,7 @@ class ServerlessAppSyncCloudFrontPlugin {
           EvaluateTargetHealth: false,
           HostedZoneId: "Z2FDTNDATAQYW2", // CloudFront HZID is always Z2FDTNDATAQYW2
         },
-        Name: this.givenDomainName,
+        Name: this.getConfig("domainName"),
         Type,
       },
     }));
@@ -173,7 +175,9 @@ class ServerlessAppSyncCloudFrontPlugin {
       await this.route53.changeResourceRecordSets(params).promise();
     } catch (err) {
       throw new Error(
-        `Error: Failed to ${action} A Alias for ${this.givenDomainName}\n`
+        `Error: Failed to ${action} A Alias for ${this.getConfig(
+          "domainName"
+        )}\n`
       );
     }
   }
@@ -245,7 +249,7 @@ class ServerlessAppSyncCloudFrontPlugin {
       throw new Error(`Error: Unable to list hosted zones in Route53.\n${err}`);
     }
     throw new Error(
-      `Error: Could not find hosted zone "${this.givenDomainName}"`
+      `Error: Could not find hosted zone "${this.getConfig("domainName")}"`
     );
   }
 
@@ -267,7 +271,7 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   prepareLogging(distributionConfig) {
-    const loggingBucket = this.getConfig("logging.bucket", null);
+    const loggingBucket = this.getConfig("logging.bucket");
 
     if (loggingBucket !== null) {
       distributionConfig.Logging.Bucket = loggingBucket;
@@ -278,7 +282,7 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   prepareDomain(distributionConfig) {
-    const domain = this.getConfig("domainName", null);
+    const domain = this.getConfig("domainName");
     if (domain !== null) {
       distributionConfig.Aliases = Array.isArray(domain) ? domain : [domain];
     } else {
@@ -337,7 +341,7 @@ class ServerlessAppSyncCloudFrontPlugin {
 
   async prepareCertificate(distributionConfig) {
     const certificate =
-      this.getConfig("certificate", null) || (await this.getCertArn());
+      this.getConfig("certificate") || (await this.getCertArn());
     if (certificate) {
       distributionConfig.ViewerCertificate.AcmCertificateArn = certificate;
     } else {
@@ -348,7 +352,7 @@ class ServerlessAppSyncCloudFrontPlugin {
   }
 
   prepareWaf(distributionConfig) {
-    const waf = this.getConfig("waf", null);
+    const waf = this.getConfig("waf");
 
     if (waf !== null) {
       distributionConfig.WebACLId = waf;
@@ -373,7 +377,7 @@ class ServerlessAppSyncCloudFrontPlugin {
     }
   }
 
-  getConfig(field, defaultValue) {
+  getConfig(field, defaultValue = null) {
     return _.get(
       this.serverless,
       `service.custom.appSyncCloudFront.${field}`,

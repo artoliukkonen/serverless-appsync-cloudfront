@@ -119,5 +119,8 @@ More specifically this plugin needs the following policies attached:
 - `cloudfront:UpdateDistribution`
 - `cloudfront:DeleteDistribution`
 - `cloudfront:TagResource`
+- `route53:CreateHostedZone`
+- `route53:ListHostedZones`
+- `route53:ChangeResourceRecordSets`
 
 You can read more about IAM profiles and policies in the [Serverless documentation](https://serverless.com/framework/docs/providers/aws/guide/credentials#creating-aws-access-keys).

@@ -12,21 +12,29 @@ class ServerlessAppSyncCloudFrontPlugin {
     this.options = options;
 
     this.hooks = {
-      "package:createDeploymentArtifacts": this.createDeploymentArtifacts.bind(
-        this
-      ),
-      "aws:info:displayStackOutputs": this.printSummary.bind(this),
+      "package:createDeploymentArtifacts": this.hookDecorator.bind(this, this.createDeploymentArtifacts),
+      "aws:info:displayStackOutputs": this.hookDecorator.bind(this, this.printSummary),
     };
   }
 
-  async createDeploymentArtifacts() {
-    if (this.getConfig("enabled", true) !== false) {
+  async hookDecorator(lifecycleFunc) {
+      // setup AWS resources
+      this.initAWSResources();
+
+      return await lifecycleFunc.call(this);
+  }
+
+  initAWSResources() {
       const credentials = this.serverless.providers.aws.getCredentials();
       const acmCredentials = Object.assign({}, credentials, {
         region: "us-east-1",
       });
       this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
       this.route53 = new this.serverless.providers.aws.sdk.Route53(credentials);
+  }
+
+  async createDeploymentArtifacts() {
+    if (this.getConfig("enabled", true) !== false) {
       const baseResources = this.serverless.service.provider
         .compiledCloudFormationTemplate;
 
@@ -105,22 +113,30 @@ class ServerlessAppSyncCloudFrontPlugin {
         }
       } else {
         certificateName = this.getConfig("domainName");
-        certificates.forEach((certificate) => {
+        for (const certificate of certificates) {
           let certificateListName = certificate.DomainName;
           // Looks for wild card and takes it out when checking
           if (certificateListName[0] === "*") {
             certificateListName = certificateListName.substr(1);
           }
+
+          // Lookup expiration because expired AWS certs sometimes have an ISSUED status
+          let certDescription = await this.acm
+            .describeCertificate({ CertificateArn: certificate.CertificateArn })
+            .promise();
+          let isCertExpired = (Date.now() > certDescription.Certificate.NotAfter);
+
           // Looks to see if the name in the list is within the given domain
           // Also checks if the name is more specific than previous ones
           if (
+            !isCertExpired &&
             certificateName.includes(certificateListName) &&
             certificateListName.length > nameLength
           ) {
             nameLength = certificateListName.length;
             certificateArn = certificate.CertificateArn;
           }
-        });
+        };
       }
     } catch (err) {
       throw Error(

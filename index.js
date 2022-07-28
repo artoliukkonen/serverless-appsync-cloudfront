@@ -124,12 +124,12 @@ class ServerlessAppSyncCloudFrontPlugin {
           let certDescription = await this.acm
             .describeCertificate({ CertificateArn: certificate.CertificateArn })
             .promise();
-          let certExpired = (Date.now() > certDescription.Certificate.NotAfter);
+          let isCertExpired = (Date.now() > certDescription.Certificate.NotAfter);
 
           // Looks to see if the name in the list is within the given domain
           // Also checks if the name is more specific than previous ones
           if (
-            !certExpired &&
+            !isCertExpired &&
             certificateName.includes(certificateListName) &&
             certificateListName.length > nameLength
           ) {

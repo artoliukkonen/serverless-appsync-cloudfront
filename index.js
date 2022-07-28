@@ -33,7 +33,6 @@ class ServerlessAppSyncCloudFrontPlugin {
       this.route53 = new this.serverless.providers.aws.sdk.Route53(credentials);
   }
 
-
   async createDeploymentArtifacts() {
     if (this.getConfig("enabled", true) !== false) {
       const baseResources = this.serverless.service.provider

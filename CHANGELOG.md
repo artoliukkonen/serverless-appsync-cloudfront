@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2022-07-28
+### Fixed
+- CodePipline issue for Route53
+- Certificate expiration check
 ## [0.9.5] - 2019-02-21
 ### Added
 - .gitignore file [#23](https://github.com/Droplr/serverless-api-cloudfront/pull/23)

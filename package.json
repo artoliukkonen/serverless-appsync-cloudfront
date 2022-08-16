@@ -1,26 +1,24 @@
 {
-  "name": "serverless-appsync-cloudfront",
-  "version": "1.0.1",
+  "name": "@amplify/serverless-appsync-cloudfront",
+  "version": "1.1.1",
   "engines": {
     "node": ">=8.10"
   },
   "description": "CloudFront distribution in front of your AppSync",
-  "author": "Arto Liukkonen",
+  "author": "Amplify",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/artoliukkonen/serverless-appsync-cloudfront"
+    "url": "https://github.com/amplify-education/serverless-appsync-cloudfront"
   },
   "keywords": [
     "serverless",
-    "serverless plugin",
     "cloudfront",
     "appsync",
     "lambda",
     "aws",
     "aws lambda",
     "amazon web services",
-    "serverless.com"
   ],
   "main": "index.js",
   "dependencies": {
